@@ -2,6 +2,9 @@
 > Image + Prompt
 
 ![설명](./image1.png)
+![설명](./image2.png){: width="40%"}
+![설명](./image3.png){: width="50%"}
+![설명](./image4.png)
 
 **소개:**
 
