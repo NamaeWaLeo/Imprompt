@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>이미지 프롬프트 추출기 설정</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-mode">
+    <div class="container">
+        <h1>Gemini AI 설정</h1>
+
+        <div class="setting-section">
+            <label for="geminiApiKey" class="setting-label">Gemini API Key:</label>
+            <input type="text" id="geminiApiKey" placeholder="여기에 Gemini API 키를 입력하세요." class="neumorphic-input">
+            <button id="saveApiKeyButton" class="neumorphic-button">API 키 저장 및 확인</button>
+            <div id="apiKeyStatus" class="status-message"></div>
+        </div>
+
+        <div class="setting-section">
+            <label for="geminiModel" class="setting-label">Gemini 모델 선택:</label>
+            <div class="select-wrapper neumorphic-input">
+                <select id="geminiModel">
+                    <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                    <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                    <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                    <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <label for="promptLength" class="setting-label">프롬프트 길이:</label>
+            <div class="select-wrapper neumorphic-input">
+                <select id="promptLength">
+                    <option value="short">짧게 (Short)</option>
+                    <option value="medium">보통 (Medium)</option>
+                    <option value="long">길게 (Long)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <label class="setting-label">플로팅 버튼 위치:</label>
+            <div class="position-grid-popup">
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="top-left" id="posTopLeft">
+                    <span class="custom-radio"></span> 좌측 상단
+                </label>
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="top-center" id="posTopCenter">
+                    <span class="custom-radio"></span> 상단 중앙
+                </label>
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="top-right" id="posTopRight">
+                    <span class="custom-radio"></span> 우측 상단
+                </label>
+
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="middle-left" id="posMiddleLeft">
+                    <span class="custom-radio"></span> 좌측 중단
+                </label>
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="middle-center" id="posMiddleCenter">
+                    <span class="custom-radio"></span> 중앙
+                </label>
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="middle-right" id="posMiddleRight">
+                    <span class="custom-radio"></span> 우측 중단
+                </label>
+
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="bottom-left" id="posBottomLeft">
+                    <span class="custom-radio"></span> 좌측 하단
+                </label>
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="bottom-center" id="posBottomCenter">
+                    <span class="custom-radio"></span> 하단 중앙
+                </label>
+                <label class="neumorphic-radio-label">
+                    <input type="radio" name="buttonPosition" value="bottom-right" id="posBottomRight" checked>
+                    <span class="custom-radio"></span> 우측 하단
+                </label>
+            </div>
+        </div>
+
+        <div class="setting-section">
+            <label for="iconSize" class="setting-label">아이콘 크기 (50% ~ 150%):</label>
+            <input type="range" id="iconSize" min="50" max="150" value="60" class="neumorphic-input">
+            <span id="iconSizeValue">60%</span>
+        </div>
+
+        <button id="saveOtherSettingsButton" class="neumorphic-button">다른 설정 저장</button>
+        <div id="otherSettingsStatus" class="status-message"></div>
+
+        <div class="version-info">
+            버전: <span id="version"></span>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,608 @@
+
+:root {
+    --background-color: #1c1c1e; /* 더 어두운 배경 */
+    --surface-color: #2e2e30; /* 약간 밝은 표면 */
+    --text-color: #f0f0f0; /* 더 밝은 텍스트 */
+    --text-color-light: #a8a8ad; /* 은은한 회색 텍스트 */
+    --primary-color: #0a84ff; /* 애플 블루 */
+    --accent-color: #32ade6; /* 약간 밝은 블루 */
+    --shadow-light: rgba(255, 255, 255, 0.03); /* 매우 은은한 밝은 그림자 */
+    --shadow-dark: rgba(0, 0, 0, 0.3); /* 약간 옅어진 어두운 그림자 */
+    --neumorphic-radius: 16px; /* 둥근 모서리 증가 */
+    --transition-duration: 0.2s; /* 기본 트랜지션 속도 */
+
+    --status-info-bg: #0a84ff;
+    --status-success-bg: #34c759; /* 애플 그린 */
+    --status-warning-bg: #ff9f0a; /* 애플 오렌지 */
+    --status-error-bg: #ff453a; /* 애플 레드 */
+    --status-text-color: #ffffff;
+    --status-warning-text-color: #333; /* 경고는 텍스트 색상 다르게 */
+
+    --loader-color: var(--text-color-light); /* 로더의 기본 색상 */
+    --progress-bar-bg: var(--background-color); /* 프로그레스 바 배경색 */
+    --progress-bar-fill: var(--primary-color); /* 프로그레스 바 채우는 색상 */
+
+    --success-color: var(--status-success-bg);
+    --error-color: var(--status-error-bg);
+
+    /* Pretendard 웹폰트 */
+    --main-font: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+
+    /* RGB 값 정의 (backdrop-filter 및 rgba 사용 위함) */
+    --background-color-rgb: 28, 28, 30;
+    --surface-color-rgb: 46, 46, 48;
+    --shadow-light-rgb: 255, 255, 255;
+    --shadow-dark-rgb: 0, 0, 0;
+    --status-success-bg-rgb: 52, 199, 89;
+    --status-error-bg-rgb: 255, 69, 58;
+    --status-warning-bg-rgb: 255, 159, 10;
+    --status-info-bg-rgb: 10, 132, 255;
+}
+
+/* Pretendard 웹폰트 CDN (기존 연결 유지) */
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+body.dark-mode {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: var(--main-font);
+}
+
+
+.neumorphic {
+    background: var(--surface-color);
+    border-radius: var(--neumorphic-radius);
+    box-shadow:
+        6px 6px 12px var(--shadow-dark),
+        -6px -6px 12px var(--shadow-light);
+    transition: box-shadow var(--transition-duration) ease-in-out;
+}
+
+.neumorphic-pressed {
+    box-shadow:
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -4px -4px 8px var(--shadow-light);
+}
+
+/*옵션*/
+.container {
+    width: 320px; /* 팝업에 맞게 고정 너비 */
+    margin: 0 auto; /* 중앙 정렬 */
+    padding: 20px; /* 패딩 감소 */
+    background: var(--background-color); /* 팝업 배경색 */
+    border-radius: var(--neumorphic-radius);
+    box-shadow: none; /* 팝업 자체에는 그림자 제거, 요소에 그림자 */
+}
+body { /* 팝업 바디에 바로 적용 */
+    min-width: 320px;
+    height: auto; /* 내용에 따라 높이 조절 */
+    overflow-y: auto; /* 내용 길면 스크롤 */
+}
+
+
+h1 {
+    color: var(--text-color);
+    text-align: center;
+    margin-bottom: 25px;
+    font-family: var(--main-font);
+    font-weight: 600;
+    font-size: 20px; /* 팝업 타이틀 크기 */
+}
+
+.setting-section {
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--main-font);
+}
+
+.setting-section label.setting-label {
+    flex-basis: 100%;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-color-light);
+}
+
+.neumorphic-input {
+    flex-grow: 1;
+    min-width: 150px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px; /* 입력 필드 모서리 덜 둥글게 */
+    background: var(--background-color);
+    color: var(--text-color);
+    box-shadow:
+        inset 3px 3px 6px rgba(0,0,0,0.4),
+        inset -3px -3px 6px rgba(255,255,255,0.05); /* 더 진하고 덜 부드러운 inset 그림자 */
+    transition: box-shadow var(--transition-duration) ease-in-out;
+    outline: none;
+    font-family: var(--main-font);
+    font-size: 15px;
+}
+
+.neumorphic-input:focus {
+    box-shadow:
+        inset 2px 2px 5px rgba(0,0,0,0.6),
+        inset -2px -2px 5px rgba(255,255,255,0.02),
+        0 0 0 2px var(--primary-color);
+}
+
+.neumorphic-button {
+    background: var(--surface-color);
+    color: var(--primary-color);
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px; /* 버튼 모서리 덜 둥글게 */
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow:
+        4px 4px 8px rgba(0,0,0,0.4),
+        -4px -4px 8px rgba(255,255,255,0.05);
+    transition: all var(--transition-duration) ease-in-out;
+    flex-shrink: 0;
+    font-family: var(--main-font);
+}
+
+.neumorphic-button:hover {
+    color: var(--accent-color);
+    transform: translateY(-1px);
+    box-shadow:
+        6px 6px 12px rgba(0,0,0,0.5),
+        -6px -6px 12px rgba(255,255,255,0.07);
+}
+
+.neumorphic-button:active {
+    box-shadow:
+        inset 3px 3px 6px rgba(0,0,0,0.4),
+        inset -3px -3px 6px rgba(255,255,255,0.05);
+    transform: translateY(0);
+}
+
+/* 드롭다운 (select) 스타일 재작성 */
+.select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.select-wrapper select {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: var(--background-color); /* 배경색 변경 */
+    color: var(--text-color);
+    font-size: 15px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+    font-family: var(--main-font);
+    box-shadow:
+        inset 3px 3px 6px rgba(0,0,0,0.4),
+        inset -3px -3px 6px rgba(255,255,255,0.05); /* inset 그림자 */
+    transition: box-shadow var(--transition-duration) ease-in-out;
+}
+
+.select-wrapper select:focus {
+    box-shadow:
+        inset 2px 2px 5px rgba(0,0,0,0.6),
+        inset -2px -2px 5px rgba(255,255,255,0.02),
+        0 0 0 2px var(--primary-color);
+}
+
+.select-wrapper::after {
+    content: '▼';
+    font-weight: bold;
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-color-light);
+    pointer-events: none;
+    font-size: 12px; /* 화살표 크기 */
+}
+
+/* 팝업 라디오 버튼 그리드 스타일 - 재작성 */
+.position-grid-popup {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 한 줄에 2개 컬럼 */
+    gap: 8px; /* 간격 감소 */
+    margin-top: 15px;
+}
+
+.position-grid-popup .neumorphic-radio-label {
+    justify-content: flex-start; /* 텍스트 왼쪽 정렬 */
+    padding: 10px; /* 패딩 감소 */
+    border-radius: 8px; /* 모서리 덜 둥글게 */
+    box-shadow:
+        3px 3px 6px rgba(0,0,0,0.3),
+        -3px -3px 6px rgba(255,255,255,0.03); /* 더 은은한 그림자 */
+    font-size: 14px; /* 폰트 크기 약간 감소 */
+}
+
+.position-grid-popup .neumorphic-radio-label:hover {
+    transform: none; /* 호버 시 이동 제거 */
+    box-shadow:
+        4px 4px 8px rgba(0,0,0,0.4),
+        -4px -4px 8px rgba(255,255,255,0.05);
+}
+
+.position-grid-popup .neumorphic-radio-label input:checked + .custom-radio {
+    box-shadow:
+        inset 1px 1px 3px rgba(0,0,0,0.4),
+        inset -1px -1px 3px rgba(255,255,255,0.05);
+}
+
+.custom-radio { /* 라디오 버튼 자체 */
+    width: 18px; /* 크기 감소 */
+    height: 18px;
+    border-radius: 50%;
+    background: var(--background-color); /* 배경색 변경 */
+    box-shadow:
+        inset 2px 2px 4px rgba(0,0,0,0.4),
+        inset -2px -2px 4px rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.custom-radio::after {
+    width: 8px; /* 체크 표시 크기 */
+    height: 8px;
+}
+
+
+.status-message {
+    margin-top: 15px;
+    text-align: center;
+    font-weight: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    flex-basis: 100%;
+    font-family: var(--main-font);
+    font-size: 14px; 
+    color: var(--text-color); 
+}
+.status-message:not(:empty) {
+    opacity: 1;
+}
+
+.version-info {
+    margin-top: 20px;
+    text-align: center;
+    color: var(--text-color-light);
+    font-size: 12px; /* 폰트 크기 약간 감소 */
+    font-family: var(--main-font);
+}
+
+/* 플로팅 버튼 */
+#floating-button-container {
+    position: fixed;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: all 0.3s ease-in-out;
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* 위치별 스타일 (유지) */
+.top-left { top: 20px; left: 20px; }
+.top-center { top: 20px; left: 50%; transform: translateX(-50%); }
+.top-right { top: 20px; right: 20px; }
+.middle-left { top: 50%; left: 20px; transform: translateY(-50%); }
+.middle-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.middle-right { top: 50%; right: 20px; transform: translateY(-50%); }
+.bottom-left { bottom: 20px; left: 20px; top: auto; }
+.bottom-center { bottom: 20px; left: 50%; transform: translateX(-50%); top: auto; }
+.bottom-right { bottom: 20px; right: 20px; top: auto; }
+
+
+#floating-button {
+    /* --button-size는 JS에서 동적으로 설정됨. 기본값은 48px */
+    width: var(--button-size);
+    height: var(--button-size);
+    border-radius: 50%;
+    background: var(--surface-color);
+    color: var(--primary-color);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow:
+        6px 6px 12px var(--shadow-dark),
+        -6px -6px 12px var(--shadow-light);
+    transition: all var(--transition-duration) ease-in-out;
+    flex-shrink: 0;
+}
+
+#floating-button:hover {
+    color: var(--accent-color);
+    transform: translateY(-3px);
+    box-shadow:
+        8px 8px 16px var(--shadow-dark),
+        -8px -8px 16px var(--shadow-light);
+}
+
+#floating-button:active {
+    box-shadow:
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -4px -4px 8px var(--shadow-light);
+    transform: translateY(0);
+}
+
+.ai-icon {
+    font-size: 20px; 
+    color: var(--primary-color);
+    filter: drop-shadow(2px 2px 4px var(--shadow-dark));
+    transition: all var(--transition-duration) ease-in-out;
+}
+
+
+/* 진행 창 */
+#progress-window-container {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    padding: 16px 22px;
+    border-radius: var(--neumorphic-radius);
+    box-shadow:
+        8px 8px 16px var(--shadow-dark),
+        -8px -8px 16px var(--shadow-light);
+    z-index: 9998;
+    display: none;
+    min-width: 280px;
+    max-width: 400px;
+    pointer-events: none;
+    font-family: var(--main-font);
+    font-size: 16px;
+    opacity: 0; 
+    transform: translateX(-50%) translateY(-30px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+#progress-window-container.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.progress-content {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 8px;
+}
+.progress-message-text {
+    flex-grow: 1;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.no-click-message {
+    font-size: 12px;
+    color: var(--text-color-light);
+    text-align: center;
+    width: 100%;
+}
+
+/* 프로그레스 바 스타일 */
+.progress-bar-container {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--progress-bar-bg);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.1);
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: var(--progress-bar-fill);
+    border-radius: 50%;
+    transition: width 0.3s ease-in-out;
+}
+
+.progress-bar-indeterminate {
+    width: 100%;
+    position: relative;
+    animation: indeterminate-progress 1.5s infinite linear;
+    transform-origin: left;
+    background: linear-gradient(90deg, transparent 0%, var(--progress-bar-fill) 50%, transparent 100%);
+    box-shadow: 0 0 5px var(--progress-bar-fill);
+}
+
+@keyframes indeterminate-progress {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+}
+
+
+/*프롬창*/
+#prompt-container {
+    position: fixed;
+    background-color: rgba(var(--surface-color-rgb), 0.95);
+    color: var(--text-color);
+    padding: 20px;
+    border-radius: var(--neumorphic-radius);
+    box-shadow:
+        12px 12px 24px rgba(var(--shadow-dark-rgb), 0.5),
+        -12px -12px 24px rgba(var(--shadow-light-rgb), 0.15);
+    z-index: 9997;
+    display: none;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    font-family: var(--main-font);
+
+    opacity: 0; 
+    transform: translateY(10px); 
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+#prompt-container.show {
+    opacity: 1; 
+    transform: translateY(0);
+}
+
+.prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(var(--text-color-light), 0.3);
+}
+.prompt-header strong {
+    color: var(--text-color);
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 0;
+}
+
+.close-button {
+    background-color: transparent;
+    color: var(--text-color-light);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    outline: none;
+    transition: color var(--transition-duration) ease-in-out, transform var(--transition-duration) ease-in-out;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    line-height: 1;
+    border-radius: 50%;
+}
+.close-button:hover {
+    color: var(--error-color);
+    transform: scale(1.1);
+}
+.close-button:active {
+    color: var(--text-color-light);
+    transform: scale(0.95);
+}
+
+
+.prompt-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.prompt-group:last-child {
+    margin-bottom: 0;
+}
+
+.prompt-group strong {
+    color: var(--primary-color);
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.prompt-textarea {
+    width: calc(100% - 28px);
+    min-height: 100px;
+    max-height: 250px;
+    resize: vertical;
+    padding: 14px;
+    font-size: 15px;
+    color: var(--text-color);
+    background: var(--background-color);
+    border: none;
+    border-radius: var(--neumorphic-radius);
+    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
+    transition: box-shadow var(--transition-duration) ease-in-out;
+    outline: none;
+    font-family: var(--main-font);
+}
+.prompt-textarea:focus {
+    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light), 0 0 0 2px var(--primary-color);
+}
+
+.copy-button {
+    align-self: flex-end;
+    padding: 12px 20px;
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+/*토스트*/
+#toast-container {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 10px; /* 상단 여백 */
+    pointer-events: none; /* 클릭 이벤트 무시 */
+}
+
+.toast {
+    background-color: rgba(var(--surface-color-rgb), 0.9);
+    color: var(--text-color);
+    padding: 15px 25px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 8px rgba(var(--shadow-dark-rgb), 0.2);
+    font-family: var(--main-font);
+    font-size: 16px;
+    opacity: 0;
+    transform: translateY(-50px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    min-width: 250px;
+    text-align: center;
+    pointer-events: auto; /* 내부 요소는 클릭 가능하도록 */
+}
+
+.toast.show {
+    opacity: 1;
+    transform: translateY(20px);
+}
+
+.toast.hide {
+    opacity: 0;
+    transform: translateY(-30px);
+}
+
+.toast.success { background-color: rgba(var(--status-success-bg-rgb), 0.9); color: var(--status-text-color); }
+.toast.error { background-color: rgba(var(--status-error-bg-rgb), 0.9); color: var(--status-text-color); }
+.toast.warning { background-color: rgba(var(--status-warning-bg-rgb), 0.9); color: var(--status-warning-text-color); }
+.toast.info { background-color: rgba(var(--status-info-bg-rgb), 0.9); color: var(--status-text-color); }
+
+
+
+@keyframes spin { /* 로더 제거로 인해 더 이상 사용되지 않을 수 있음 */
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes indeterminate-progress {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+}
