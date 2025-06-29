@@ -1,4 +1,3 @@
-
 // 플로팅 버튼 컨테이너
 const floatingButtonContainer = document.createElement('div');
 floatingButtonContainer.id = 'floating-button-container';
@@ -30,7 +29,6 @@ document.body.appendChild(toastContainer);
 let toastTimeout; // 토스트 자동 숨김을 위한 타이머
 
 
-
 // 토스트 알림 기능 (다이나믹 아일랜드 스타일)
 
 /**
@@ -53,7 +51,7 @@ function showToast(message, type = 'info', duration = 3000) {
     requestAnimationFrame(() => { // DOM 업데이트 후 애니메이션 적용
         toast.classList.add('show');
     });
-    
+
     // 일정 시간 후 사라지도록
     clearTimeout(toastTimeout); // 이전 타이머 클리어
     toastTimeout = setTimeout(() => {
@@ -63,7 +61,6 @@ function showToast(message, type = 'info', duration = 3000) {
         toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }, duration);
 }
-
 
 
 // 진행 상황 창 기능
@@ -90,7 +87,7 @@ function updateProgressWindow(message, type = 'loading', show = false, progress 
         </div>
         <div class="no-click-message">다른 곳을 클릭하지 마세요.</div>
     `;
-    
+
     // 애니메이션을 위해 display와 show 클래스 제어
     if (show) {
         progressWindowContainer.style.display = 'block';
@@ -132,11 +129,11 @@ function applyButtonPosition(position) {
         'bottom-left', 'bottom-center', 'bottom-right'
     ];
     floatingButtonContainer.classList.remove(...positionClasses);
-    
+
     // 새 위치 클래스 추가
     floatingButtonContainer.classList.add(position);
     currentButtonPosition = position; // 현재 위치 업데이트
-    
+
     // 버튼 위치 변경 시 결과창 위치도 즉시 업데이트
     updatePromptWindowPosition();
 }
@@ -151,25 +148,39 @@ function applyButtonAndIconSize(sizePercentage) {
 
     if (floatButton) {
         // styles.css에 정의된 --button-size 변수의 기본값 48px를 기준으로 스케일링
-        const baseButtonSize = 48; 
+        const baseButtonSize = 48;
         const newSize = (parseInt(sizePercentage) / 100) * baseButtonSize;
         // --button-size 변수 업데이트를 통해 버튼 크기 조절
-        floatButton.style.setProperty('--button-size', `${newSize}px`); 
+        floatButton.style.setProperty('--button-size', `${newSize}px`);
         // 명시적으로 width/height도 설정 (일부 브라우저에서 CSS 변수 업데이트가 즉시 반영되지 않을 경우 대비)
-        floatButton.style.width = `${newSize}px`; 
+        floatButton.style.width = `${newSize}px`;
         floatButton.style.height = `${newSize}px`;
         console.log(`[UI] Floating button size updated to: ${newSize}px`);
     }
 
     if (aiIcon) {
         // 아이콘 폰트 크기 조절 (styles.css에 정의된 .ai-icon 폰트 크기 기본값 20px를 기준으로 스케일링)
-        const baseIconFontSize = 20; 
+        const baseIconFontSize = 20;
         const newIconFontSize = (parseInt(sizePercentage) / 100) * baseIconFontSize;
         aiIcon.style.fontSize = `${newIconFontSize}px`;
         console.log(`[UI] AI icon font size updated to: ${newIconFontSize}px`);
     }
     // 버튼 크기 변경 후 결과 창 위치 재계산
     updatePromptWindowPosition();
+}
+
+/**
+ * 플로팅 버튼의 가시성을 설정하는 함수
+ * @param {boolean} hide true이면 숨기고, false이면 표시합니다.
+ */
+function setFloatingButtonVisibility(hide) {
+    if (hide) {
+        floatingButtonContainer.style.display = 'none';
+        console.log("[UI] Floating button hidden.");
+    } else {
+        floatingButtonContainer.style.display = 'flex'; // flex로 설정하여 중앙 정렬이 유지되도록
+        console.log("[UI] Floating button shown.");
+    }
 }
 
 
@@ -179,20 +190,20 @@ function applyButtonAndIconSize(sizePercentage) {
  */
 function updatePromptWindowPosition() {
     console.log("[UI] Updating prompt window position.");
-    
+
     // 현재 스타일을 저장
     const initialDisplay = promptContainer.style.display;
     const initialVisibility = promptContainer.style.visibility;
     const initialOpacity = promptContainer.style.opacity;
 
     // 크기 측정을 위해 잠시 보이게 설정 (화면에는 안 보이게)
-    promptContainer.style.display = 'block'; 
+    promptContainer.style.display = 'block';
     promptContainer.style.visibility = 'hidden';
     promptContainer.style.opacity = '0';
-    
+
     const buttonRect = floatingButtonContainer.getBoundingClientRect();
     const containerRect = promptContainer.getBoundingClientRect(); // 결과창의 현재 크기 가져오기
-    
+
     // 측정 후 다시 원래 상태로 복원
     promptContainer.style.display = initialDisplay;
     promptContainer.style.visibility = initialVisibility;
@@ -212,8 +223,8 @@ function updatePromptWindowPosition() {
         top = buttonRect.bottom + margin;
     } else if (currentButtonPosition.includes('bottom')) {
         // 창이 버튼 위로 올라가야 하므로, 버튼 상단 위치에서 창 높이와 마진을 뺌
-        top = buttonRect.top - containerRect.height - margin; 
-        bottom = 'auto'; 
+        top = buttonRect.top - containerRect.height - margin;
+        bottom = 'auto';
     } else { // middle-left, middle-right, middle-center (기본은 버튼 아래)
         top = buttonRect.bottom + margin;
     }
@@ -221,29 +232,29 @@ function updatePromptWindowPosition() {
     // 가로 위치 결정 (버튼 기준으로 정렬)
     if (currentButtonPosition.includes('left')) {
         left = buttonRect.left; // 버튼의 왼쪽 끝과 결과창의 왼쪽 끝 맞춤
-        right = 'auto'; 
+        right = 'auto';
     } else if (currentButtonPosition.includes('right')) {
         // 창의 오른쪽 끝을 버튼의 오른쪽 끝과 맞추기
-        left = buttonRect.right - containerRect.width; 
-        right = 'auto'; 
+        left = buttonRect.right - containerRect.width;
+        right = 'auto';
     } else { // top-center, middle-center, bottom-center (가로 중앙 정렬)
         left = '50%';
         transform += 'translateX(-50%)';
-        right = 'auto'; 
+        right = 'auto';
     }
     // 최종 위치 적용 (초과 시 화면 경계 보정)
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    let finalLeft = (typeof left === 'number') ? left : 
-                    (left === '50%' ? (windowWidth / 2) - (containerRect.width / 2) : 0); 
-    
+    let finalLeft = (typeof left === 'number') ? left :
+                    (left === '50%' ? (windowWidth / 2) - (containerRect.width / 2) : 0);
+
     if (typeof right === 'number') {
         finalLeft = windowWidth - containerRect.width - right;
     }
 
-    let finalTop = typeof top === 'number' ? top : 0; 
-    if (typeof bottom === 'number') { 
+    let finalTop = typeof top === 'number' ? top : 0;
+    if (typeof bottom === 'number') {
         finalTop = windowHeight - containerRect.height - bottom;
     }
 
@@ -257,13 +268,13 @@ function updatePromptWindowPosition() {
     if (finalTop + containerRect.height > windowHeight - 10) {
         finalTop = windowHeight - containerRect.height - 10;
     }
-    
+
     // 최종 스타일 적용
     promptContainer.style.top = `${finalTop}px`;
     promptContainer.style.left = `${finalLeft}px`;
-    promptContainer.style.right = 'auto'; 
+    promptContainer.style.right = 'auto';
     promptContainer.style.bottom = 'auto';
-    promptContainer.style.transform = transform; 
+    promptContainer.style.transform = transform;
 
     console.log(`[UI] Prompt container position calculated: Top: ${finalTop}px, Left: ${finalLeft}px`); // 디버깅 로그
 }
@@ -271,13 +282,6 @@ function updatePromptWindowPosition() {
 
 // 창 크기 변경 시 UI 위치 업데이트
 window.addEventListener('resize', updatePromptWindowPosition);
-
-
-// 초기 버튼 위치 로드 및 적용 (확장 프로그램 로드 시 한 번 실행)
-chrome.storage.sync.get('buttonPosition', (data) => {
-    const savedPosition = data.buttonPosition || 'bottom-right'; // 기본값을 'bottom-right'로 설정
-    applyButtonPosition(savedPosition);
-});
 
 
 // 복사 버튼 기능
@@ -293,11 +297,127 @@ function copyToClipboard(text) {
 }
 
 
+// 이미지 처리 메인 로직을 함수로 캡슐화하여 재사용
+async function processImageAndGeneratePrompts(imageDataUrl) {
+    console.log("[API CALL] Sending image data to background for Gemini processing.");
+    button.disabled = true; // 버튼 비활성화
+    button.classList.add('disabled'); // 스타일 적용을 위해 클래스 추가
+
+    updateProgressWindow('Gemini API로 프롬프트 생성 요청 중...', 'loading', true);
+
+    // Gemini API 응답 타임아웃 설정 (예: 30초)
+    const timeoutDuration = 30000; // 30초
+    const timeoutPromise = new Promise((resolve, reject) => {
+        const id = setTimeout(() => {
+            clearTimeout(id); // 자신을 클리어
+            reject(new Error(`API 응답 시간 초과 (${timeoutDuration / 1000}초). 네트워크 상태를 확인하거나 API 키를 확인해주세요.`));
+        }, timeoutDuration);
+    });
+
+    const apiRequestPromise = chrome.runtime.sendMessage({
+        action: "processImageWithGemini",
+        imageDataUrl: imageDataUrl
+    });
+
+    let response;
+    try {
+        response = await Promise.race([apiRequestPromise, timeoutPromise]);
+        console.log("[API CALL] Response received from background:", response);
+    } catch (timeoutError) {
+        console.error("[API CALL] Timeout or other error during API request:", timeoutError);
+        hideProgressWindow();
+        // 오류 메시지 표시
+        promptContainer.innerHTML = `
+            <div class="prompt-header">
+                <strong>오류 발생</strong>
+                <button class="close-button">X</button>
+            </div>
+            <div style="color: var(--error-color);">${timeoutError.message}</div>
+        `;
+        showToast(`오류: ${timeoutError.message}`, 'error');
+        promptContainer.style.display = 'block';
+        // 애니메이션 시작
+        requestAnimationFrame(() => {
+            promptContainer.classList.add('show');
+        });
+        updatePromptWindowPosition();
+        promptContainer.querySelector('.close-button').addEventListener('click', () => {
+            promptContainer.classList.remove('show');
+            promptContainer.addEventListener('transitionend', () => promptContainer.style.display = 'none', { once: true });
+        });
+        button.disabled = false; // 오류 시 버튼 활성화
+        button.classList.remove('disabled'); // 스타일 제거
+        return; // 타임아웃 발생 시 이후 로직 실행 중단
+    }
+
+    hideProgressWindow(); // Gemini API 응답 후 진행 상황 창 숨기기
+
+    if (response.error) {
+        console.error("[API CALL] API returned an error:", response.error);
+        // 오류 발생 시 프롬프트 창에 오류 메시지 표시
+        promptContainer.innerHTML = `
+            <div class="prompt-header">
+                <strong>오류 발생</strong>
+                <button class="close-button">X</button>
+            </div>
+            <div style="color: var(--error-color);">${response.error}</div>
+        `;
+        showToast(`오류: ${response.error}`, 'error'); // 토스트 알림
+    } else {
+        console.log("[API CALL] Prompts generated successfully.");
+        // 성공 시 프롬프트 결과 표시
+        promptContainer.innerHTML = `
+            <div class="prompt-header">
+                <strong>프롬프트 결과</strong>
+                <button class="close-button">X</button>
+            </div>
+            <div class="prompt-group">
+                <strong>NovelAI:</strong>
+                <textarea class="prompt-textarea neumorphic-input" readonly>${response.novelai}</textarea>
+                <button class="copy-button neumorphic-button" data-copy-target="novelai">복사</button>
+            </div>
+            <div class="prompt-group">
+                <strong>Stable Diffusion:</strong>
+                <textarea class="prompt-textarea neumorphic-input" readonly>${response.stable_diffusion}</textarea>
+                <button class="copy-button neumorphic-button" data-copy-target="stable_diffusion">복사</button>
+            </div>
+        `;
+        // 복사 버튼 이벤트 리스너 추가 (이벤트 위임 대신 각 버튼에 직접 할당)
+        promptContainer.querySelectorAll('.copy-button').forEach(copyBtn => {
+            copyBtn.addEventListener('click', (e) => {
+                const textarea = e.target.previousElementSibling;
+                if (textarea && textarea.classList.contains('prompt-textarea')) {
+                    copyToClipboard(textarea.value);
+                }
+            });
+        });
+
+        showToast('프롬프트가 성공적으로 생성되었습니다!', 'success'); // 토스트 알림
+    }
+    promptContainer.style.display = 'block'; // 결과 창 표시
+    // 결과 창 콘텐츠가 로드된 후 정확한 크기를 반영하기 위해 애니메이션 전 위치 업데이트
+    updatePromptWindowPosition();
+
+    // 애니메이션 시작
+    requestAnimationFrame(() => {
+        promptContainer.classList.add('show');
+    });
+
+    // 닫기 버튼 이벤트 리스너는 결과 창 표시 후 추가해야 함
+    promptContainer.querySelector('.close-button').addEventListener('click', () => {
+        promptContainer.classList.remove('show');
+        promptContainer.addEventListener('transitionend', () => promptContainer.style.display = 'none', { once: true });
+    });
+    button.disabled = false; // 성공 시 버튼 활성화
+    button.classList.remove('disabled'); // 스타일 제거
+}
+
 
 // 이벤트 리스너 (주요 기능 트리거)
 // 플로팅 버튼 클릭 이벤트
 button.addEventListener('click', async () => {
     console.log("[CLICK] Floating button clicked. Initiating process.");
+    // 버튼 비활성화는 processImageAndGeneratePrompts 함수에서 처리됨
     promptContainer.style.display = 'none'; // 기존 프롬프트 창 숨기기
     promptContainer.classList.remove('show'); // 결과 창에 애니메이션 클래스 제거 (재사용 대비)
 
@@ -322,135 +442,33 @@ button.addEventListener('click', async () => {
             console.warn("[CLIPBOARD] No image found in clipboard.");
             hideProgressWindow();
             showToast('클립보드에 이미지가 없습니다. 이미지를 복사한 후 다시 시도해주세요.', 'error');
+            button.disabled = false; // 오류 시 버튼 활성화
+            button.classList.remove('disabled'); // 스타일 제거
             return; // 이후 작업 중단
         }
 
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const imageDataUrl = reader.result;
-            console.log("[API CALL] Sending image data to background for Gemini processing.");
+        updateProgressWindow('이미지 압축 및 변환 중...', 'loading', true); // 진행 메시지 업데이트
 
-            updateProgressWindow('Gemini API로 프롬프트 생성 요청 중...', 'loading', true);
-            
-            // Gemini API 응답 타임아웃 설정 (예: 30초)
-            const timeoutDuration = 30000; // 30초
-            const timeoutPromise = new Promise((resolve, reject) => {
-                const id = setTimeout(() => {
-                    clearTimeout(id); // 자신을 클리어
-                    reject(new Error(`API 응답 시간 초과 (${timeoutDuration / 1000}초). 네트워크 상태를 확인하거나 API 키를 확인해주세요.`));
-                }, timeoutDuration);
-            });
+        // 이미지 Blob을 WebP Base64로 변환 및 압축
+        const webpDataUrl = await convertBlobToWebPBase64(imageBlob);
 
-            const apiRequestPromise = chrome.runtime.sendMessage({
-                action: "processImageWithGemini",
-                imageDataUrl: imageDataUrl
-            });
+        await processImageAndGeneratePrompts(webpDataUrl); // WebP Base64 이미지 데이터를 함수로 전달
 
-            let response;
-            try {
-                response = await Promise.race([apiRequestPromise, timeoutPromise]);
-                console.log("[API CALL] Response received from background:", response);
-            } catch (timeoutError) {
-                console.error("[API CALL] Timeout or other error during API request:", timeoutError);
-                hideProgressWindow();
-                // 오류 메시지 표시
-                promptContainer.innerHTML = `
-                    <div class="prompt-header">
-                        <strong>오류 발생</strong>
-                        <button class="close-button">X</button>
-                    </div>
-                    <div style="color: var(--error-color);">${timeoutError.message}</div>
-                `;
-                showToast(`오류: ${timeoutError.message}`, 'error');
-                promptContainer.style.display = 'block';
-                // 애니메이션 시작
-                requestAnimationFrame(() => {
-                    promptContainer.classList.add('show');
-                });
-                updatePromptWindowPosition();
-                promptContainer.querySelector('.close-button').addEventListener('click', () => {
-                    promptContainer.classList.remove('show');
-                    promptContainer.addEventListener('transitionend', () => promptContainer.style.display = 'none', { once: true });
-                });
-                return; // 타임아웃 발생 시 이후 로직 실행 중단
-            }
-
-            hideProgressWindow(); // Gemini API 응답 후 진행 상황 창 숨기기
-
-            if (response.error) {
-                console.error("[API CALL] API returned an error:", response.error);
-                // 오류 발생 시 프롬프트 창에 오류 메시지 표시
-                promptContainer.innerHTML = `
-                    <div class="prompt-header">
-                        <strong>오류 발생</strong>
-                        <button class="close-button">X</button>
-                    </div>
-                    <div style="color: var(--error-color);">${response.error}</div>
-                `;
-                showToast(`오류: ${response.error}`, 'error'); // 토스트 알림
-            } else {
-                console.log("[API CALL] Prompts generated successfully.");
-                // 성공 시 프롬프트 결과 표시
-                promptContainer.innerHTML = `
-                    <div class="prompt-header">
-                        <strong>프롬프트 결과</strong>
-                        <button class="close-button">X</button>
-                    </div>
-                    <div class="prompt-group">
-                        <strong>NovelAI:</strong>
-                        <textarea class="prompt-textarea neumorphic-input" readonly>${response.novelai}</textarea>
-                        <button class="copy-button neumorphic-button" data-copy-target="novelai">복사</button>
-                    </div>
-                    <div class="prompt-group">
-                        <strong>Stable Diffusion:</strong>
-                        <textarea class="prompt-textarea neumorphic-input" readonly>${response.stable_diffusion}</textarea>
-                        <button class="copy-button neumorphic-button" data-copy-target="stable_diffusion">복사</button>
-                    </div>
-                `;
-                // 복사 버튼 이벤트 리스너 추가 (이벤트 위임 대신 각 버튼에 직접 할당)
-                promptContainer.querySelectorAll('.copy-button').forEach(copyBtn => {
-                    copyBtn.addEventListener('click', (e) => {
-                        const textarea = e.target.previousElementSibling;
-                        if (textarea && textarea.classList.contains('prompt-textarea')) {
-                            copyToClipboard(textarea.value);
-                        }
-                    });
-                });
-                
-                showToast('프롬프트가 성공적으로 생성되었습니다!', 'success'); // 토스트 알림
-            }
-            promptContainer.style.display = 'block'; // 결과 창 표시
-            // 결과 창 콘텐츠가 로드된 후 정확한 크기를 반영하기 위해 애니메이션 전 위치 업데이트
-            updatePromptWindowPosition(); 
-            
-            // 애니메이션 시작
-            requestAnimationFrame(() => {
-                promptContainer.classList.add('show');
-            });
-
-            // 닫기 버튼 이벤트 리스너는 결과 창 표시 후 추가해야 함
-            promptContainer.querySelector('.close-button').addEventListener('click', () => {
-                promptContainer.classList.remove('show'); // 숨김 애니메이션 시작
-                promptContainer.addEventListener('transitionend', () => promptContainer.style.display = 'none', { once: true });
-            });
-
-        };
-        reader.readAsDataURL(imageBlob); // 이미지 Blob을 Base64로 변환
     } catch (err) {
         // 클립보드 접근 또는 메시지 전송 중 오류 발생 시
-        console.error('클립보드 접근 또는 확장 프로그램 오류가 발생했습니다:', err);
+        console.error('클립보드 접근, 이미지 처리 또는 확장 프로그램 오류가 발생했습니다:', err);
         hideProgressWindow(); // 오류 발생 시 진행창 숨기기
         promptContainer.innerHTML = `
             <div class="prompt-header">
                 <strong>오류 발생</strong>
                 <button class="close-button">X</button>
             </div>
-            <div style="color: var(--error-color);">클립보드 접근 또는 확장 프로그램 오류가 발생했습니다.<br>(${err.message})</div>
+            <div style="color: var(--error-color);">클립보드 접근, 이미지 처리 또는 확장 프로그램 오류가 발생했습니다.<br>(${err.message})</div>
         `;
         showToast('확장 프로그램 오류가 발생했습니다. 개발자 도구를 확인해주세요.', 'error'); // 토스트 알림
         promptContainer.style.display = 'block'; // 오류 메시지라도 보이도록
         updatePromptWindowPosition(); // 결과창 위치 다시 설정
-        
+
         // 애니메이션 시작
         requestAnimationFrame(() => {
             promptContainer.classList.add('show');
@@ -461,23 +479,58 @@ button.addEventListener('click', async () => {
             promptContainer.classList.remove('show');
             promptContainer.addEventListener('transitionend', () => promptContainer.style.display = 'none', { once: true });
         });
+        // processImageAndGeneratePrompts 외부에서 발생한 오류이므로 여기서도 버튼을 다시 활성화
+        button.disabled = false; // 오류 시 버튼 활성화
+        button.classList.remove('disabled'); // 스타일 제거
     }
 });
+
+/**
+ * 이미지 Blob을 WebP 형식의 Base64 데이터 URL로 변환합니다.
+ * Canvas API를 사용하여 메인 스레드에서 실행됩니다.
+ * @param {Blob} blob - 변환할 이미지 Blob.
+ * @param {number} quality - WebP 인코딩 품질 (0.0 ~ 1.0). 기본값은 0.8.
+ * @returns {Promise<string>} WebP 형식의 Base64 데이터 URL.
+ */
+async function convertBlobToWebPBase64(blob, quality = 0.8) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+
+                const dataUrl = canvas.toDataURL('image/webp', quality);
+                resolve(dataUrl);
+
+            } catch (e) {
+                reject(new Error(`Failed to convert image to WebP: ${e.message}`));
+            }
+        };
+        img.onerror = (e) => {
+            reject(new Error(`Failed to load image for WebP conversion: ${e.message || 'unknown error'}`));
+        };
+        img.src = URL.createObjectURL(blob);
+    });
+}
 
 
 // 플로팅 버튼, 진행 상황 창, 프롬프트 창이 아닌 다른 곳을 클릭하면 모두 숨김
 document.addEventListener('click', (event) => {
     const target = event.target;
     // 클릭된 요소가 플로팅 버튼 컨테이너, 진행 상황 창, 프롬프트 창 또는 그 자손이 아니라면 숨김
-    if (!floatingButtonContainer.contains(target) && 
+    if (!floatingButtonContainer.contains(target) &&
         !progressWindowContainer.contains(target) &&
         !promptContainer.contains(target)) {
-        
+
         if (promptContainer.style.display === 'block') {
             promptContainer.classList.remove('show'); // 숨김 애니메이션 시작
             // 애니메이션 완료 후 display: none
             promptContainer.addEventListener('transitionend', () => {
-                promptContainer.style.display = 'none'; 
+                promptContainer.style.display = 'none';
             }, { once: true });
             console.log("[UI HIDE] Prompt container hidden by outside click.");
         }
@@ -489,12 +542,14 @@ document.addEventListener('click', (event) => {
 
 // background.js 또는 popup.js로부터 메시지 수신 (예: 컨텍스트 메뉴에서 이미지 복사, 팝업에서 설정 변경)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    // 이전에 copyImageToClipboard는 컨텍스트 메뉴에서 직접 이미지를 복사하는 로직이었으나,
+    // 이제 컨텍스트 메뉴는 initiateGeminiProcessing을 바로 호출하므로 이 블록은 필요 없거나,
+    // 다른 용도로 사용될 때만 유효합니다.
     if (request.action === "copyImageToClipboard") {
-        console.log("[MESSAGE] Received copyImageToClipboard request.");
-        // 컨텍스트 메뉴를 통한 이미지 복사 처리 (현재 manifest에서 컨텍스트 메뉴 제거됨)
-        // 이 메시지는 이제 들어오지 않거나, 다른 방법으로 트리거 될 때만 작동합니다.
+        console.log("[MESSAGE] Received copyImageToClipboard request. (This action might be deprecated)");
+        // 기존 로직 유지 (만약 다른 곳에서 이 메시지를 보낼 경우를 대비)
         if (request.srcUrl) {
-            updateProgressWindow('이미지 복사 중...', 'loading', true); // 진행 상황 창
+            updateProgressWindow('이미지 복사 중...', 'loading', true);
             fetch(request.srcUrl)
                 .then(response => response.blob())
                 .then(blob => {
@@ -506,18 +561,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 })
                 .then(() => {
                     console.log('이미지 데이터가 클립보드에 성공적으로 복사되었습니다.');
-                    showToast('이미지가 클립보드에 복사되었습니다.', 'success'); // 토스트 알림
-                    updateProgressWindow('이미지 복사 완료', 'success', false); // 진행 상황 창 닫기
+                    showToast('이미지가 클립보드에 복사되었습니다.', 'success');
+                    hideProgressWindow(); // 성공 시 진행 상황 창 닫기
                 })
                 .catch(err => {
                     console.error('이미지 데이터 클립보드 복사 실패:', err);
-                    showToast('이미지 복사 실패: ' + err.message, 'error'); // 토스트 알림
-                    updateProgressWindow('이미지 복사 실패', 'error', false); // 진행 상황 창 닫기
+                    showToast('이미지 복사 실패: ' + err.message, 'error');
+                    hideProgressWindow(); // 실패 시 진행 상황 창 닫기
                 });
         } else {
             console.warn('이미지 URL을 찾을 수 없어 클립보드 복사 실패.');
-            showToast('복사할 이미지 URL을 찾을 수 없습니다.', 'warning'); // 토스트 알림
-            updateProgressWindow('복사할 이미지 없음', 'warning', false); // 진행 상황 창 닫기
+            showToast('복사할 이미지 URL을 찾을 수 없습니다.', 'warning');
+            hideProgressWindow(); // 경고 시 진행 상황 창 닫기
         }
     } else if (request.action === "updateUI") { // 팝업에서 UI 설정 변경 시
         console.log("[MESSAGE] Received updateUI request:", request);
@@ -526,18 +581,39 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             applyButtonPosition(request.buttonPosition);
         }
         // 아이콘 크기 업데이트
-        if (request.iconSize) { 
+        if (request.iconSize) {
             applyButtonAndIconSize(request.iconSize);
         }
+        // 플로팅 버튼 가시성 업데이트
+        if (typeof request.hideFloatingButton !== 'undefined') {
+            setFloatingButtonVisibility(request.hideFloatingButton);
+        }
         // 다른 UI 설정이 추가되면 여기에 추가
+    } else if (request.action === "initiateGeminiProcessing") { // background.js로부터 Gemini 처리 시작 메시지 수신
+        console.log("[MESSAGE] Received initiateGeminiProcessing request from background.");
+        promptContainer.style.display = 'none'; // 기존 프롬프트 창 숨기기
+        promptContainer.classList.remove('show'); // 결과 창에 애니메이션 클래스 제거 (재사용 대비)
+        // 받은 Base64 이미지 데이터로 프롬프트 생성 로직 시작 (이미 background.js에서 WebP로 변환되어 넘어옴)
+        processImageAndGeneratePrompts(request.imageDataUrl);
+    } else if (request.action === "updateProgressWindow") { // background.js로부터 진행 상황 업데이트 요청 수신
+        // background.js에서 이미지 로드 중 진행 상황을 content.js에 알릴 때 사용
+        updateProgressWindow(request.message, request.type, request.show, request.progress);
+    } else if (request.action === "showToast") { // background.js로부터 토스트 메시지 요청 수신
+        // background.js에서 오류 또는 성공 메시지를 content.js에 알릴 때 사용
+        showToast(request.message, request.type, request.duration);
     }
 });
 
-// 초기 아이콘 크기 로드 및 적용 (확장 프로그램 로드 시 한 번 실행)
-chrome.storage.sync.get('iconSize', (data) => {
+// 초기 UI 설정 로드 및 적용 (확장 프로그램 로드 시 한 번 실행)
+chrome.storage.sync.get(['buttonPosition', 'iconSize', 'hideFloatingButton'], (data) => {
+    const savedPosition = data.buttonPosition || 'bottom-right'; // 기본값을 'bottom-right'로 설정
     const savedIconSize = data.iconSize || '100'; // 기본값 100%
-    applyButtonAndIconSize(savedIconSize); // 초기 로드 시 크기 적용
-    console.log(`[UI] Initial size applied based on storage: ${savedIconSize}%`);
+    const savedHideButton = data.hideFloatingButton || false; // 기본값 false (숨기지 않음)
+
+    applyButtonPosition(savedPosition);
+    applyButtonAndIconSize(savedIconSize);
+    setFloatingButtonVisibility(savedHideButton);
+    console.log(`[UI] Initial settings applied based on storage: Position(${savedPosition}), Size(${savedIconSize}%), Hidden(${savedHideButton})`);
 });
 
 // 문서 로드 후 초기 UI 위치를 한 번 업데이트 (레이아웃 안정화)
@@ -545,5 +621,5 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         updatePromptWindowPosition();
         console.log("[UI] DOMContentLoaded: Initial prompt window position updated.");
-    }, 100); 
+    }, 100);
 });
