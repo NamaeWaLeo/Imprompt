@@ -169,7 +169,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 **NovelAI 프롬프트 규칙:**
 - **강화 가중치**: 단어를 중괄호 {}로 감싸세요. 예: {high quality}, {{masterpiece}}
-- **약화 가중치**: 단어를 대괄호 []로 감싸세요. 예: [[blurry]]
+- **약화 가중치**: 단어를 대괄호 []로 감싸세요. 
 - **숫자 가중치**: '숫자::프롬프트::' 또는 '숫자::프롬프트1, 프rompt2::' 형식을 사용하세요. 숫자는 가중치 값을 나타냅니다. 예: 1.2::masterpiece::, 0.8::simple background::
 
 **Stable Diffusion 프롬프트 규칙:**
@@ -184,6 +184,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 - **배경 세부 사항**: (e.g., natural landscape, bustling city street, futuristic interior, ancient castle, dense forest, snowy mountain range, open field, misty swamp, starry night sky)
 - **조명/색상**: (e.g., volumetric lighting, golden hour, neon glow, vibrant colors, monochrome, soft lighting, harsh shadows, cinematic lighting, dramatic lighting)
 - **기타 세부 사항**: (e.g., weather conditions like rain or snow, time of day, specific objects in foreground/background, magical effects, fire, water splashes, lens flare, dust particles)
+- **부정적인 프롬프트** : 절대 적지 마세요. (예: bad hand, bad eyes).
 
 **요구하는 JSON 형식:**
 \`\`\`json
