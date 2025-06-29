@@ -1,896 +1,1308 @@
+/* 사용자 정의 색상 팔레트 */
 :root {
-    --background-color: #1c1c1e; /* 더 어두운 배경 */
-    --surface-color: #2e2e30; /* 약간 밝은 표면 */
-    --text-color: #f0f0f0; /* 더 밝은 텍스트 */
-    --text-color-light: #a8a8ad; /* 은은한 회색 텍스트 */
-    --primary-color: #0a84ff; /* 애플 블루 */
-    --accent-color: #32ade6; /* 약간 밝은 블루 */
-    --shadow-light: rgba(255, 255, 255, 0.03); /* 매우 은은한 밝은 그림자 */
-    --shadow-dark: rgba(0, 0, 0, 0.3); /* 약간 옅어진 어두운 그림자 */
-    --neumorphic-radius: 16px; /* 둥근 모서리 증가 */
-    --transition-duration: 0.2s; /* 기본 트랜지션 속도 */
+    /* 새로운 포인트 컬러: 이미지에서 추출한 색상 */
+    --image-color-darkest: #293556;
+    --image-color-darker: #2E4583;
+    --image-color-medium: #3E60C1;
+    --image-color-light: #5983FC;
 
+    /* 전반적인 다크 테마 및 미려함 강화 */
+    --background-color: #1a1e2a; /* 더 깊은 어두운 배경 */
+    --surface-color-rgb-base: 40, 50, 70; /* 글래스모피즘 표면 기본 RGB */
+    --surface-color-light: rgba(var(--surface-color-rgb-base), 0.7); /* 블러된 표면 (opacity 0.7) */
+    --surface-color-dark: rgba(var(--surface-color-rgb-base), 0.9); /* 버튼, 헤더 등 좀 더 불투명한 표면 */
+
+    --text-color: #e0e6f5; /* 밝은 텍스트 */
+    --text-color-light: #a8b4cb; /* 은은한 회색 텍스트 */
+    --text-color-darker-light: #8e9bb3; /* 조금 더 어두운 밝은 회색 (ex: NovelAI (Gemini 생성) 텍스트) */
+
+    --primary-color: var(--image-color-medium); /* 주 색상 (중간 블루) */
+    --accent-color: var(--image-color-light); /* 강조 색상 (밝은 블루) */
+    --gradient-start: var(--image-color-darker); /* 그라데이션 시작 */
+    --gradient-end: var(--image-color-light); /* 그라데이션 끝 */
+    --gradient-accent: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    --gradient-hover: linear-gradient(135deg, var(--gradient-end), var(--gradient-start)); /* 호버 시 그라데이션 반전 */
+
+
+    /* 글래스모피즘을 위한 그림자 및 테두리 */
+    --glass-shadow: 8px 8px 16px rgba(0, 0, 0, 0.4),
+                    -8px -8px 16px rgba(255, 255, 255, 0.05);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.15);
+    --glass-blur: 20px; /* 블러 강도 증가 */
+
+    --neumorphic-radius: 12px;
+    --transition-duration: 0.35s; /* 트랜지션 시간 약간 증가 */
+
+    /* 상태 색상 */
     --status-info-bg: #0a84ff;
-    --status-success-bg: #34c759; /* 애플 그린 */
-    --status-warning-bg: #ff9f0a; /* 애플 오렌지 */
-    --status-error-bg: #ff453a; /* 애플 레드 */
+    --status-success-bg: #34c759;
+    --status-warning-bg: #ff9f0a;
+    --status-error-bg: #ff453a;
     --status-text-color: #ffffff;
-    --status-warning-text-color: #333; /* 경고는 텍스트 색상 다르게 */
+    --status-warning-text-color: #333; /* 경고 텍스트는 어둡게 유지 */
 
-    --loader-color: var(--text-color-light); /* 로더의 기본 색상 */
-    --progress-bar-bg: var(--background-color); /* 프로그레스 바 배경색 */
-    --progress-bar-fill: var(--primary-color); /* 프로그레스 바 채우는 색상 */
+    --loader-color: var(--text-color-light);
+    --progress-bar-bg: rgba(var(--surface-color-rgb-base), 0.5);
+    --progress-bar-fill: var(--primary-color);
 
     --success-color: var(--status-success-bg);
     --error-color: var(--status-error-bg);
-
-    /* Pretendard 웹폰트 */
-    --main-font: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-
-    /* RGB 값 정의 (backdrop-filter 및 rgba 사용 위함) */
-    --background-color-rgb: 28, 28, 30;
-    --surface-color-rgb: 46, 46, 48;
-    --shadow-light-rgb: 255, 255, 255;
-    --shadow-dark-rgb: 0, 0, 0;
-    --status-success-bg-rgb: 52, 199, 89;
-    --status-error-bg-rgb: 255, 69, 58;
-    --status-warning-bg-rgb: 255, 159, 10;
-    --status-info-bg-rgb: 10, 132, 255;
 }
 
-/* Pretendard 웹폰트 CDN (기존 연결 유지) */
+/* Pretendard 웹폰트 CDN */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
-body.dark-mode {
+/* HTML, BODY 태그에 직접 적용되는 스타일은 전역 충돌을 피하기 위해 신중하게 접근하거나 캡슐화 필요 */
+/* 현재 popup.html에서만 사용되므로 괜찮음. */
+body {
     background-color: var(--background-color);
     color: var(--text-color);
-    font-family: var(--main-font);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    line-height: 1.5;
+    min-width: 380px; /* 팝업 최소 너비 증가 */
+    height: auto;
+    overflow-y: auto;
 }
 
+/* 스크롤바 커스터마이징 */
+/* 이 부분은 브라우저 기본 스크롤바에 적용되므로 접두사 없이 유지 */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px; /* 가로 스크롤바도 고려 */
+}
 
-.neumorphic {
-    background: var(--surface-color);
+::-webkit-scrollbar-track {
+    background: rgba(var(--surface-color-rgb-base), 0.3); /* 트랙 배경색 */
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--image-color-darker); /* 썸 색상 */
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color); /* 호버 시 색상 */
+}
+
+/* 글래스모피즘 기본 스타일 */
+/* .neumorphic 클래스는 pophtml에서도 사용되므로 접두사 추가 */
+.impu-neumorphic {
+    background: var(--surface-color-light); /* 투명도 0.7 적용 */
     border-radius: var(--neumorphic-radius);
-    box-shadow:
-        6px 6px 12px var(--shadow-dark),
-        -6px -6px 12px var(--shadow-light);
-    transition: box-shadow var(--transition-duration) ease-in-out;
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
 }
 
-.neumorphic-pressed {
+.impu-neumorphic-pressed {
     box-shadow:
-        inset 4px 4px 8px var(--shadow-dark),
-        inset -4px -4px 8px var(--shadow-light);
+        inset 4px 4px 8px rgba(0,0,0,0.6),
+        inset -4px -4px 8px rgba(255,255,255,0.08);
 }
 
 /* 팝업 전체 컨테이너 */
-.container {
-    width: 400px; /* 팝업 너비 증가 */
-    margin: 0 auto; /* 중앙 정렬 */
-    padding: 20px; /* 패딩 유지 */
-    background: var(--background-color); /* 팝업 배경색 */
+/* popup.html에서 .container 사용 */
+.impu-container {
+    width: 380px; /* 팝업 너비 */
+    margin: 0 auto;
+    padding: 18px; /* 패딩 증가 */
+    background: transparent;
     border-radius: var(--neumorphic-radius);
-    box-shadow: none; /* 팝업 자체에는 그림자 제거, 요소에 그림자 */
+    box-shadow: none;
     display: flex;
     flex-direction: column;
 }
-body { /* 팝업 바디에 바로 적용 */
-    min-width: 400px; /* 변경된 너비 */
-    height: auto; /* 내용에 따라 높이 조절 */
-    overflow-y: auto; /* 내용 길면 스크롤 */
-}
 
-
-h1 {
+/* popup.html의 h1은 직접 변경하지 않고, 필요한 경우 .impu-container h1 등으로 범위 지정 */
+.impu-container h1 {
     color: var(--text-color);
     text-align: center;
-    margin-bottom: 25px;
-    font-family: var(--main-font);
-    font-weight: 600;
-    font-size: 20px; /* 팝업 타이틀 크기 */
+    margin-bottom: 25px; /* 마진 증가 */
+    font-weight: 700;
+    font-size: 26px; /* 폰트 크기 증가 */
 }
 
 /* 탭 바 스타일 */
-.tab-bar {
+.impu-tab-bar {
     display: flex;
     justify-content: space-around;
-    background: var(--surface-color);
+    background: rgba(var(--surface-color-rgb-base), 0.4); /* 탭바 배경도 투명도 적용 */
     border-radius: var(--neumorphic-radius);
-    box-shadow:
-        6px 6px 12px var(--shadow-dark),
-        -6px -6px 12px var(--shadow-light);
-    margin-bottom: 20px;
-    padding: 5px;
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.3), -4px -4px 8px rgba(255,255,255,0.03);
+    border: var(--glass-border);
+    margin-bottom: 20px; /* 마진 증가 */
+    padding: 5px; /* 패딩 증가 */
 }
 
-.tab-button {
+.impu-tab-button {
     flex-grow: 1;
-    padding: 12px 10px;
+    padding: 12px 10px; /* 패딩 증가 */
     border: none;
     background: transparent;
     color: var(--text-color-light);
-    font-family: var(--main-font);
-    font-size: 16px;
+    font-size: 15px; /* 폰트 크기 조정 */
     font-weight: 500;
-    border-radius: 10px;
+    border-radius: 9px; /* 라운드 증가 */
     cursor: pointer;
-    transition: all var(--transition-duration) ease-in-out;
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
     text-align: center;
 }
 
-.tab-button:hover {
-    color: var(--primary-color);
+.impu-tab-button:hover {
+    color: var(--accent-color);
+    background: rgba(var(--surface-color-rgb-base), 0.1); /* 호버 시 미묘한 배경 변화 */
 }
 
-.tab-button.active {
-    background: var(--background-color);
-    color: var(--primary-color);
+.impu-tab-button.active {
+    background: var(--image-color-darker); /* 활성 탭 배경색 (이미지 다크 블루) */
+    color: var(--text-color);
     box-shadow:
         inset 3px 3px 6px rgba(0,0,0,0.4),
         inset -3px -3px 6px rgba(255,255,255,0.05);
 }
 
 /* 탭 콘텐츠 스타일 */
-.tab-content {
-    display: none; /* 기본적으로 숨김 */
-    padding-top: 10px; /* 탭 바와의 간격 */
+.impu-tab-content {
+    display: none;
+    padding-top: 15px; /* 패딩 증가 */
+    /* 탭 전환 애니메이션 */
+    animation: impu-fadeInSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    overflow-y: auto; /* 모든 탭에 스크롤바 적용을 위해 */
+    max-height: 480px; /* 팝업의 최대 높이 (필요에 따라 조절) */
+    padding-right: 10px; /* 스크롤바 공간 확보 */
+}
+.impu-tab-content:last-of-type {
+    padding-right: 0; /* 마지막 탭의 스크롤바 패딩 제거 */
 }
 
-.tab-content.active {
-    display: block; /* 활성화된 탭만 보여줌 */
+/* 새로운 탭 전환 애니메이션 키프레임 */
+@keyframes impu-fadeInSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px); /* 시작 시 조금 더 아래에서 */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-/* 기존 설정 섹션 스타일 유지 */
-.setting-section {
-    margin-bottom: 20px;
+.impu-tab-content.active {
+    display: block;
+}
+
+/* 설정 섹션 */
+.impu-setting-section {
+    margin-bottom: 18px; /* 마진 증가 */
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px;
-    font-family: var(--main-font);
+    gap: 10px; /* 간격 증가 */
 }
 
-.setting-section label.setting-label {
+.impu-setting-section label.impu-setting-label {
     flex-basis: 100%;
-    margin-bottom: 5px;
+    margin-bottom: 6px; /* 마진 증가 */
     font-weight: 500;
-    color: var(--text-color-light);
+    color: var(--text-color);
+    font-size: 15px;
 }
 
-.neumorphic-input {
+/* 입력 필드 */
+.impu-neumorphic-input {
     flex-grow: 1;
     min-width: 150px;
-    padding: 12px;
-    border: none;
-    border-radius: 8px; /* 입력 필드 모서리 덜 둥글게 */
-    background: var(--background-color);
+    padding: 12px; /* 패딩 증가 */
+    border: var(--glass-border);
+    border-radius: 8px; /* 라운드 증가 */
+    background: rgba(var(--surface-color-rgb-base), 0.3); /* 더 어둡게 (투명도 더 높임) */
     color: var(--text-color);
     box-shadow:
-        inset 3px 3px 6px rgba(0,0,0,0.4),
-        inset -3px -3px 6px rgba(255,255,255,0.05); /* 더 진하고 덜 부드러운 inset 그림자 */
-    transition: box-shadow var(--transition-duration) ease-in-out;
+        inset 2px 2px 5px rgba(0,0,0,0.4),
+        inset -2px -2px 5px rgba(255,255,255,0.03);
+    transition: box-shadow var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), border-color var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
     outline: none;
-    font-family: var(--main-font);
-    font-size: 15px;
+    font-size: 14px;
 }
 
-.neumorphic-input:focus {
+.impu-neumorphic-input:focus {
     box-shadow:
-        inset 2px 2px 5px rgba(0,0,0,0.6),
-        inset -2px -2px 5px rgba(255,255,255,0.02),
-        0 0 0 2px var(--primary-color);
+        inset 1px 1px 3px rgba(0,0,0,0.6),
+        inset -1px -1px 3px rgba(255,255,255,0.02),
+        0 0 0 3px var(--accent-color); /* 포커스 테두리 두께 증가 */
+    border-color: var(--accent-color);
 }
 
-.neumorphic-button {
-    background: var(--surface-color);
-    color: var(--primary-color);
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px; /* 버튼 모서리 덜 둥글게 */
-    font-size: 15px;
+/* API 키 입력 필드 유효성 검사 피드백 */
+.impu-neumorphic-input.error-input {
+    border-color: var(--error-color);
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(255,255,255,0.02), 0 0 0 3px var(--error-color);
+}
+.impu-neumorphic-input.success-input {
+    border-color: var(--success-color);
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(255,255,255,0.02), 0 0 0 3px var(--success-color);
+}
+
+/* 버튼 (그라데이션 악센트 + 흐르는 애니메이션) */
+.impu-neumorphic-button {
+    background: var(--gradient-accent);
+    color: var(--text-color);
+    padding: 12px 20px; /* 패딩 증가 */
+    /* 테두리 부드럽게 변경 */
+    border: 1px solid transparent; /* 기본 테두리는 투명하게 */
+    border-image: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1)) 1; /* 그라데이션 테두리 */
+    border-image-slice: 1;
+    border-radius: 9px; /* 라운드 증가 */
+    font-size: 15px; /* 폰트 크기 증가 */
     font-weight: 500;
     cursor: pointer;
     box-shadow:
-        4px 4px 8px rgba(0,0,0,0.4),
-        -4px -4px 8px rgba(255,255,255,0.05);
-    transition: all var(--transition-duration) ease-in-out;
+        5px 5px 10px rgba(0,0,0,0.4),
+        -5px -5px 10px rgba(255,255,255,0.06); /* 그림자 강화 */
+    /* 애니메이션 트랜지션 Cubic-bezier 및 시간 미세 조정 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    font-family: var(--main-font);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
 }
 
-.neumorphic-button:hover {
-    color: var(--accent-color);
-    transform: translateY(-1px);
+/* 흐르는 애니메이션 오버레이 */
+.impu-neumorphic-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%; /* 시작 위치 조정 */
+    width: 60%; /* 너비 조정 */
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2); /* 더 밝은 반짝임 */
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 자연스러운 애니메이션 곡선 */
+    transform: skewX(-25deg); /* 기울기 조정 */
+    z-index: -1;
+}
+
+.impu-neumorphic-button:hover::before {
+    left: 120%; /* 끝 위치 조정 */
+}
+
+.impu-neumorphic-button:hover {
+    background: var(--gradient-hover); /* 호버 시 그라데이션 반전 */
+    transform: translateY(-3px) scale(1.02); /* 호버 효과 강화 */
+    box-shadow: 7px 7px 14px rgba(0,0,0,0.5), -7px -7px 14px rgba(255,255,255,0.08);
+}
+
+.impu-neumorphic-button:active {
     box-shadow:
-        6px 6px 12px rgba(0,0,0,0.5),
-        -6px -6px 12px rgba(255,255,255,0.07);
+        inset 4px 4px 8px rgba(0,0,0,0.5),
+        inset -4px -4px 8px rgba(255,255,255,0.06);
+    transform: translateY(0) scale(0.98); /* 클릭 효과 강화 */
 }
 
-.neumorphic-button:active {
-    box-shadow:
-        inset 3px 3px 6px rgba(0,0,0,0.4),
-        inset -3px -3px 6px rgba(255,255,255,0.05);
-    transform: translateY(0);
-}
-
-/* 드롭다운 (select) 스타일 재작성 */
-.select-wrapper {
+/* 드롭다운 (select) 스타일 */
+.impu-select-wrapper {
     position: relative;
     display: inline-block;
     width: 100%;
 }
 
-.select-wrapper select {
+.impu-select-wrapper select {
     width: 100%;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: var(--background-color); /* 배경색 변경 */
+    padding: 12px; /* 패딩 증가 */
+    border: var(--glass-border);
+    border-radius: 8px; /* 라운드 증가 */
+    background: rgba(var(--surface-color-rgb-base), 0.3);
     color: var(--text-color);
-    font-size: 15px;
+    font-size: 14px;
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
     cursor: pointer;
     outline: none;
-    font-family: var(--main-font);
     box-shadow:
-        inset 3px 3px 6px rgba(0,0,0,0.4),
-        inset -3px -3px 6px rgba(255,255,255,0.05); /* inset 그림자 */
-    transition: box-shadow var(--transition-duration) ease-in-out;
+        inset 2px 2px 5px rgba(0,0,0,0.4),
+        inset -2px -2px 5px rgba(255,255,255,0.03);
+    transition: box-shadow var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), border-color var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
 }
 
-.select-wrapper select:focus {
+.impu-select-wrapper select:focus {
     box-shadow:
-        inset 2px 2px 5px rgba(0,0,0,0.6),
-        inset -2px -2px 5px rgba(255,255,255,0.02),
-        0 0 0 2px var(--primary-color);
+        inset 1px 1px 3px rgba(0,0,0,0.6),
+        inset -1px -1px 3px rgba(255,255,255,0.02),
+        0 0 0 3px var(--accent-color);
+    border-color: var(--accent-color);
 }
 
-.select-wrapper::after {
+.impu-select-wrapper::after {
     content: '▼';
     font-weight: bold;
     position: absolute;
-    right: 15px;
+    right: 15px; /* 위치 조정 */
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-color-light);
     pointer-events: none;
-    font-size: 12px; /* 화살표 크기 */
+    font-size: 12px; /* 폰트 크기 조정 */
 }
 
-/* 팝업 라디오 버튼 그리드 스타일 - 재작성 */
-.position-grid-popup {
+/* 팝업 라디오 버튼 그리드 스타일 */
+.impu-position-grid-popup {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3개 컬럼으로 변경 */
-    gap: 8px; /* 간격 감소 */
-    margin-top: 15px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px; /* 간격 증가 */
+    margin-top: 12px; /* 마진 증가 */
 }
 
-.position-grid-popup .neumorphic-radio-label {
-    justify-content: flex-start; /* 텍스트 왼쪽 정렬 */
-    padding: 10px; /* 패딩 감소 */
-    border-radius: 8px; /* 모서리 덜 둥글게 */
+.impu-position-grid-popup .impu-neumorphic-radio-label {
+    justify-content: flex-start;
+    padding: 10px; /* 패딩 증가 */
+    border-radius: 8px; /* 라운드 증가 */
+    background: rgba(var(--surface-color-rgb-base), 0.3);
     box-shadow:
         3px 3px 6px rgba(0,0,0,0.3),
-        -3px -3px 6px rgba(255,255,255,0.03); /* 더 은은한 그림자 */
-    font-size: 14px; /* 폰트 크기 약간 감소 */
-    display: flex; /* 라디오 버튼과 텍스트 정렬을 위해 추가 */
-    align-items: center; /* 세로 중앙 정렬 */
-    gap: 8px; /* 라디오 버튼과 텍스트 간격 */
+        -3px -3px 6px rgba(255,255,255,0.03);
+    border: var(--glass-border);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px; /* 간격 증가 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
+    cursor: pointer; /* 라벨 자체도 클릭 가능하도록 */
 }
 
-.position-grid-popup .neumorphic-radio-label:hover {
-    transform: none; /* 호버 시 이동 제거 */
+.impu-position-grid-popup .impu-neumorphic-radio-label:hover {
+    transform: translateY(-2px); /* 호버 효과 강화 */
     box-shadow:
         4px 4px 8px rgba(0,0,0,0.4),
-        -4px -4px 8px rgba(255,255,255,0.05);
+        -4px -4px 8px rgba(255,255,255,0.04);
 }
 
-.position-grid-popup .neumorphic-radio-label input:checked + .custom-radio {
+.impu-position-grid-popup .impu-neumorphic-radio-label input {
+    /* 오리지널 라디오 버튼 숨기기 */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.impu-position-grid-popup .impu-neumorphic-radio-label input:checked + .impu-custom-radio {
     box-shadow:
         inset 1px 1px 3px rgba(0,0,0,0.4),
         inset -1px -1px 3px rgba(255,255,255,0.05);
 }
 
-.custom-radio { /* 라디오 버튼 자체 */
-    width: 18px; /* 크기 감소 */
-    height: 18px;
+.impu-custom-radio { /* 라디오 버튼 자체 */
+    width: 18px; /* 크기 증가 */
+    height: 18px; /* 크기 증가 */
     border-radius: 50%;
-    background: var(--background-color); /* 배경색 변경 */
+    background: rgba(var(--surface-color-rgb-base), 0.5);
     box-shadow:
         inset 2px 2px 4px rgba(0,0,0,0.4),
         inset -2px -2px 4px rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
     display: flex;
     justify-content: center;
     align-items: center;
     flex-shrink: 0;
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
 }
 
-.custom-radio::after {
+.impu-custom-radio::after {
     content: '';
-    width: 8px; /* 체크 표시 크기 */
-    height: 8px;
+    width: 9px; /* 내부 점 크기 증가 */
+    height: 9px; /* 내부 점 크기 증가 */
     border-radius: 50%;
-    background-color: var(--primary-color);
+    background-color: var(--accent-color);
     opacity: 0;
-    transition: opacity var(--transition-duration) ease-in-out;
+    transition: opacity var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
 }
-.position-grid-popup .neumorphic-radio-label input:checked + .custom-radio::after {
+.impu-position-grid-popup .impu-neumorphic-radio-label input:checked + .impu-custom-radio::after {
     opacity: 1;
 }
 
-/* 체크박스 스타일 */
-.checkbox-group {
+/* 체크박스 스타일 (기존 유지) */
+.impu-checkbox-group {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 10px; /* 간격 증가 */
     width: 100%;
 }
 
-.neumorphic-checkbox {
+.impu-neumorphic-checkbox {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    width: 22px;
-    height: 22px;
-    border-radius: 6px;
-    background: var(--background-color);
+    width: 22px; /* 크기 증가 */
+    height: 22px; /* 크기 증가 */
+    border-radius: 6px; /* 라운드 증가 */
+    background: rgba(var(--surface-color-rgb-base), 0.5);
     box-shadow:
         inset 2px 2px 5px rgba(0,0,0,0.4),
         inset -2px -2px 5px rgba(255,255,255,0.05);
+    border: var(--glass-border);
     cursor: pointer;
     outline: none;
     position: relative;
-    transition: all var(--transition-duration) ease-in-out;
-    flex-shrink: 0; /* 체크박스 크기 고정 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
+    flex-shrink: 0;
 }
 
-.neumorphic-checkbox:checked {
-    background: var(--primary-color);
+.impu-neumorphic-checkbox:checked {
+    background: var(--accent-color);
     box-shadow:
         inset 2px 2px 5px rgba(0,0,0,0.6),
         inset -2px -2px 5px rgba(255,255,255,0.02);
 }
 
-.neumorphic-checkbox:checked::after {
+.impu-neumorphic-checkbox:checked::after {
     content: '✔';
     color: var(--text-color);
-    font-size: 14px;
+    font-size: 15px; /* 폰트 크기 증가 */
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
 
-.neumorphic-label {
+.impu-neumorphic-label {
     color: var(--text-color);
     font-size: 15px;
     cursor: pointer;
-    user-select: none; /* 텍스트 선택 방지 */
+    user-select: none;
 }
 
-.status-message {
-    margin-top: 15px;
+.impu-status-message {
+    margin-top: 12px; /* 마진 증가 */
     text-align: center;
     font-weight: 500;
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    /* 상태 메시지 등장/사라짐 애니메이션 추가 */
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-basis: 100%;
-    font-family: var(--main-font);
     font-size: 14px;
     color: var(--text-color);
 }
-.status-message:not(:empty) {
+.impu-status-message:not(:empty) {
     opacity: 1;
 }
 
-.version-info {
-    margin-top: 20px;
+.impu-version-info {
+    margin-top: 25px; /* 마진 증가 */
     text-align: center;
     color: var(--text-color-light);
-    font-size: 12px; /* 폰트 크기 약간 감소 */
-    font-family: var(--main-font);
+    font-size: 13px;
 }
 
 /* --- 새로운 UI 요소 스타일 --- */
 
-/* 고급 설정 섹션 제목 */
-.advanced-settings-section-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-top: 30px;
-    margin-bottom: 15px;
-    border-bottom: 1px solid rgba(var(--text-color-light), 0.2);
-    padding-bottom: 8px;
-    width: 100%;
+/* 팝업 탭바 버튼 간격 및 디자인 */
+.impu-tab-bar {
+    margin-bottom: 20px; /* 탭바 아래 여백 */
 }
+.impu-tab-button {
+    font-size: 15px; /* 탭 버튼 폰트 크기 조정 */
+    padding: 10px 15px; /* 탭 버튼 패딩 조정 */
+}
+
+/* 탭 콘텐츠의 제목들 */
+/* popup.html h2, h3는 직접 변경하지 않고 .impu-tab-content 아래로 범위 지정 */
+.impu-tab-content h2, .impu-tab-content h3 {
+    margin-top: 0;
+    margin-bottom: 18px; /* 마진 증가 */
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* 접기/펴기 가능한 섹션 */
+.impu-collapsible-section {
+    background: rgba(var(--surface-color-rgb-base), 0.4); /* 섹션 배경도 더 어둡게, 투명도 0.4 */
+    border-radius: var(--neumorphic-radius);
+    margin-bottom: 18px; /* 마진 증가 */
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.3), -4px -4px 8px rgba(255,255,255,0.05);
+    border: var(--glass-border);
+    overflow: hidden; /* 콘텐츠 숨김 처리 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
+}
+
+.impu-collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 18px; /* 패딩 증가 */
+    cursor: pointer;
+    background: rgba(var(--surface-color-rgb-base), 0.6); /* 헤더는 좀 더 불투명하게 (0.6) */
+    border-bottom: 1px solid rgba(var(--text-color-light), 0.15); /* 구분선 */
+    transition: background var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
+}
+
+.impu-collapsible-header:hover {
+    background: rgba(var(--surface-color-rgb-base), 0.7); /* 호버 시 약간 밝게 */
+}
+
+.impu-collapsible-header .impu-section-title {
+    margin: 0;
+    font-size: 17px; /* 폰트 크기 증가 */
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.impu-collapsible-header .impu-collapse-icon {
+    font-size: 13px; /* 폰트 크기 증가 */
+    color: var(--text-color-light);
+    transition: transform var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
+}
+
+.impu-collapsible-section:not(.active) .impu-collapsible-header .impu-collapse-icon {
+    transform: rotate(-90deg); /* 접힌 상태에서 아이콘 회전 */
+}
+
+.impu-collapsible-content {
+    max-height: 0; /* 초기에는 숨김 */
+    overflow: hidden;
+    /* 부드러운 펼침 애니메이션 시간 증가 및 Cubic-bezier 함수 적용 */
+    transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), padding 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0 18px; /* 초기 패딩 0 */
+}
+
+.impu-collapsible-section.active .impu-collapsible-content {
+    max-height: 600px; /* 충분히 큰 값 (컨텐츠 길이에 따라 조절) */
+    padding: 18px; /* 펼쳤을 때 패딩 */
+}
+
+/* 각 섹션 내부의 setting-section은 padding 없이 gap만 사용하도록 */
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-image-conversion-tab .impu-setting-section,
+#impu-settings-info-tab .impu-setting-section,
+.impu-collapsible-content .impu-setting-section {
+    margin-bottom: 15px; /* 내부 여백 */
+    padding: 0; /* 기존 setting-section의 패딩 제거 */
+    border-bottom: none; /* 하단 테두리 제거 */
+}
+.impu-collapsible-content .impu-setting-section:last-child {
+    margin-bottom: 0;
+}
+
+/* .section-title (collapsible header 내부) */
+/* .section-title 앞에도 impu- 붙임 */
+.impu-section-title {
+    color: var(--text-color); /* 밝은 색상 유지 */
+    font-size: 18px; /* 크기 유지 */
+    font-weight: 700;
+    border-bottom: none; /* 섹션 헤더에 테두리 있으므로 여기서는 제거 */
+    padding-bottom: 0;
+    margin-bottom: 0;
+}
+/* settings-info-tab의 최상단 저장 버튼 마진 조정 */
+#impu-settings-info-tab #impu-saveOtherSettingsButton {
+    margin-top: 30px !important; /* 마진 증가 */
+}
+/* settings-info-tab의 모든 설정 초기화 버튼 마진 조정 */
+#impu-settings-info-tab #impu-resetAllSettingsButton {
+    margin-top: 20px !important; /* 마진 증가 */
+}
+
 
 /* 커스터마이징 프롬프트 그룹 */
-.custom-prompt-input-group {
-    margin-top: 15px;
+.impu-custom-prompt-input-group {
+    margin-top: 15px; /* 마진 증가 */
 }
 
-.custom-prompt-input-group label {
-    font-size: 16px;
+.impu-custom-prompt-input-group label {
+    font-size: 15px;
     font-weight: 500;
     color: var(--text-color);
-    margin-bottom: 8px;
-    display: block;
+    margin-bottom: 8px; /* 마진 증가 */
 }
 
-.custom-prompt-textarea {
+.impu-custom-prompt-textarea {
     width: calc(100% - 24px); /* 패딩 고려 */
-    min-height: 80px;
-    max-height: 200px;
+    min-height: 80px; /* 최소 높이 증가 */
+    max-height: 200px; /* 최대 높이 증가 */
     resize: vertical;
-    padding: 12px;
-    border: none;
-    border-radius: 8px;
-    background: var(--background-color);
+    padding: 12px; /* 패딩 증가 */
+    border: var(--glass-border);
+    border-radius: 8px; /* 라운드 증가 */
+    background: rgba(var(--surface-color-rgb-base), 0.3);
     color: var(--text-color);
     box-shadow:
-        inset 3px 3px 6px rgba(0,0,0,0.4),
-        inset -3px -3px 6px rgba(255,255,255,0.05);
-    transition: box-shadow var(--transition-duration) ease-in-out;
+        inset 2px 2px 5px rgba(0,0,0,0.4),
+        inset -2px -2px 5px rgba(255,255,255,0.03);
+    transition: box-shadow var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), border-color var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
     outline: none;
-    font-family: var(--main-font);
     font-size: 14px;
 }
-.custom-prompt-textarea:focus {
+.impu-custom-prompt-textarea:focus {
     box-shadow:
-        inset 2px 2px 5px rgba(0,0,0,0.6),
-        inset -2px -2px 5px rgba(255,255,255,0.02),
-        0 0 0 2px var(--primary-color);
+        inset 1px 1px 3px rgba(0,0,0,0.6),
+        inset -1px -1px 3px rgba(255,255,255,0.02),
+        0 0 0 3px var(--accent-color);
+    border-color: var(--accent-color);
 }
 
 /* 히스토리 탭 스타일 */
-.history-list {
+.impu-history-list {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-.history-item {
-    background: var(--surface-color);
+.impu-history-item {
+    background: rgba(var(--surface-color-rgb-base), 0.5);
     border-radius: var(--neumorphic-radius);
-    padding: 15px;
-    margin-bottom: 10px;
-    box-shadow:
-        4px 4px 8px rgba(0,0,0,0.4),
-        -4px -4px 8px rgba(255,255,255,0.05);
+    padding: 15px; /* 패딩 증가 */
+    margin-bottom: 10px; /* 마진 증가 */
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.3), -5px -5px 10px rgba(255,255,255,0.06); /* 그림자 강화 */
+    border: var(--glass-border);
     cursor: pointer;
-    transition: all var(--transition-duration) ease-in-out;
+    /* 히스토리 아이템 호버 시 애니메이션 추가 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.history-item:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        6px 6px 12px rgba(0,0,0,0.5),
-        -6px -6px 12px rgba(255,255,255,0.07);
+.impu-history-item:hover {
+    transform: translateY(-3px); /* 호버 효과 강화 */
+    box-shadow: 7px 7px 14px rgba(0,0,0,0.4), -7px -7px 14px rgba(255,255,255,0.08);
 }
 
-.history-item-header {
+.impu-history-item-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 10px; /* 마진 증가 */
 }
 
-.history-item-date {
-    font-size: 13px;
+.impu-history-item-date {
+    font-size: 13px; /* 폰트 크기 증가 */
     color: var(--text-color-light);
 }
 
-.history-item-prompt-preview {
-    font-size: 14px;
+.impu-history-item-prompt-preview {
+    font-size: 14px; /* 폰트 크기 증가 */
     color: var(--text-color);
-    white-space: nowrap;
+    white-space: normal; /* 긴 텍스트 줄바꿈 허용 */
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 10px;
+    margin-bottom: 10px; /* 마진 증가 */
+    line-height: 1.4; /* 줄 간격 조정 */
 }
 
-.history-item-buttons {
+.impu-history-item-buttons {
     display: flex;
-    gap: 8px;
+    gap: 8px; /* 간격 증가 */
     justify-content: flex-end;
 }
 
-.history-item-button {
-    background: var(--background-color);
-    color: var(--primary-color);
-    padding: 8px 12px;
-    border: none;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    box-shadow:
-        2px 2px 4px rgba(0,0,0,0.3),
-        -2px -2px 4px rgba(255,255,255,0.03);
-    transition: all var(--transition-duration) ease-in-out;
-}
-
-.history-item-button:hover {
+.impu-history-item-button {
+    background: rgba(var(--surface-color-rgb-base), 0.5);
     color: var(--accent-color);
-    box-shadow:
-        3px 3px 6px rgba(0,0,0,0.4),
-        -3px -3px 6px rgba(255,255,255,0.05);
+    padding: 8px 12px; /* 패딩 증가 */
+    /* 테두리 부드럽게 변경 */
+    border: 1px solid transparent; /* 기본 테두리는 투명하게 */
+    border-image: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)) 1; /* 그라데이션 테두리 */
+    border-image-slice: 1;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.3), -3px -3px 6px rgba(255,255,255,0.03); /* 그림자 강화 */
+    border-radius: 7px; /* 라운드 증가 */
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    /* 애니메이션 트랜지션 Cubic-bezier 및 시간 미세 조정 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.history-item-button:active {
-    box-shadow:
-        inset 1px 1px 3px rgba(0,0,0,0.4),
-        inset -1px -1px 3px rgba(255,255,255,0.05);
+/* 히스토리 버튼 흐르는 애니메이션 오버레이 */
+.impu-history-item-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.12); /* 반짝임 강화 */
+    transition: all 0.5s ease;
+    transform: skewX(-25deg);
+    z-index: -1;
 }
 
-/* 히스토리 상세 보기 모달 (필요하다면 추가) */
-/* 현재는 직접 보여주는 방식으로, 나중에 상세 모달로 변경 가능 */
 
-/* 플로팅 버튼 (기존 스타일 유지) */
-#floating-button-container {
-    position: fixed;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    transition: all 0.3s ease-in-out;
-    opacity: 1;
-    transform: scale(1);
+.impu-history-item-button:hover::before {
+    left: 120%;
 }
 
-/* 플로팅 버튼 비활성화 스타일 */
-#floating-button.disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    box-shadow:
-        inset 4px 4px 8px var(--shadow-dark),
-        inset -4px -4px 8px var(--shadow-light);
-    transform: translateY(0);
-    pointer-events: none; /* 이 줄을 추가하여 클릭 이벤트를 완전히 막습니다. */
-}
-
-/* 위치별 스타일 (유지) */
-.top-left { top: 20px; left: 20px; }
-.top-center { top: 20px; left: 50%; transform: translateX(-50%); }
-.top-right { top: 20px; right: 20px; }
-.middle-left { top: 50%; left: 20px; transform: translateY(-50%); }
-.middle-center { top: 50%; left: 50%; transform: translate(-50%, -50%); }
-.middle-right { top: 50%; right: 20px; transform: translateY(-50%); }
-.bottom-left { bottom: 20px; left: 20px; top: auto; }
-.bottom-center { bottom: 20px; left: 50%; transform: translateX(-50%); top: auto; }
-.bottom-right { bottom: 20px; right: 20px; top: auto; }
-
-
-#floating-button {
-    /* --button-size는 JS에서 동적으로 설정됨. 기본값은 48px */
-    width: var(--button-size);
-    height: var(--button-size);
-    border-radius: 50%;
-    background: var(--surface-color);
+.impu-history-item-button:hover {
+    background: rgba(var(--surface-color-rgb-base), 0.7); /* 호버 시 내부 색상 변경 */
     color: var(--primary-color);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     box-shadow:
-        6px 6px 12px var(--shadow-dark),
-        -6px -6px 12px var(--shadow-light);
-    transition: all var(--transition-duration) ease-in-out;
-    flex-shrink: 0;
+        4px 4px 8px rgba(0,0,0,0.4),
+        -4px -4px 8px rgba(255,255,255,0.05);
 }
 
-#floating-button:hover:not(.disabled) {
-    color: var(--accent-color);
-    transform: translateY(-3px);
+.impu-history-item-button:active {
     box-shadow:
-        8px 8px 16px var(--shadow-dark),
-        -8px -8px 16px var(--shadow-light);
+        inset 2px 2px 4px rgba(0,0,0,0.4),
+        inset -2px -2px 4px rgba(255,255,255,0.05);
 }
 
-#floating-button:active:not(.disabled) {
+/* 히스토리 썸네일 스타일 */
+.impu-history-thumbnail {
+    width: 64px; /* 크기 증가 */
+    height: 64px; /* 크기 증가 */
+    border-radius: 8px; /* 라운드 증가 */
+    object-fit: cover;
+    margin-left: auto;
     box-shadow:
-        inset 4px 4px 8px var(--shadow-dark),
-        inset -4px -4px 8px var(--shadow-light);
-    transform: translateY(0);
-}
-
-.ai-icon {
-    font-size: 20px;
-    color: var(--primary-color);
-    filter: drop-shadow(2px 2px 4px var(--shadow-dark));
-    transition: all var(--transition-duration) ease-in-out;
+        3px 3px 6px rgba(0,0,0,0.2),
+        -3px -3px 6px rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.1);
+    /* 썸네일 등장/사라짐 및 호버 애니메이션 추가 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 
-/* 진행 창 */
-#progress-window-container {
+/* 진행 창 (Progress Window) */
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-progress-window-container {
     position: fixed;
-    top: 20px;
+    top: 25px; /* 위치 조정 */
     left: 50%;
     transform: translateX(-50%);
-    background-color: var(--surface-color);
+    background-color: rgba(var(--surface-color-rgb-base), 0.9); /* 투명도 0.9 */
     color: var(--text-color);
-    padding: 16px 22px;
-    border-radius: var(--neumorphic-radius);
-    box-shadow:
-        8px 8px 16px var(--shadow-dark),
-        -8px -8px 16px var(--shadow-light);
+    padding: 16px 22px; /* 패딩 증가 */
+    border-radius: 16px; /* 라운드 증가 */
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     z-index: 9998;
     display: none;
-    min-width: 280px;
-    max-width: 400px;
+    min-width: 280px; /* 최소 너비 증가 */
+    max-width: 400px; /* 최대 너비 증가 */
     pointer-events: none;
-    font-family: var(--main-font);
-    font-size: 16px;
+    font-size: 16px; /* 폰트 크기 증가 */
     opacity: 0;
-    transform: translateX(-50%) translateY(-30px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transform: translateX(-50%) translateY(-60px); /* 시작 위치 조정 */
+    /* 진행 창 등장/사라짐 애니메이션 (Mac OS 알림 스타일) */
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-#progress-window-container.show {
+#impu-progress-window-container.show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
 }
-
-.progress-content {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    margin-bottom: 8px;
-}
-.progress-message-text {
-    flex-grow: 1;
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--text-color);
+/* hide 클래스를 추가하여 사라질 때 애니메이션 적용 */
+#impu-progress-window-container.hide {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-60px);
 }
 
-.no-click-message {
-    font-size: 12px;
-    color: var(--text-color-light);
-    text-align: center;
-    width: 100%;
-}
-
-/* 프로그레스 바 스타일 */
-.progress-bar-container {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background-color: var(--progress-bar-bg);
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.1);
-}
-
-.progress-bar {
-    height: 100%;
-    background-color: var(--progress-bar-fill);
-    border-radius: 50%;
-    transition: width 0.3s ease-in-out;
-}
-
-.progress-bar-indeterminate {
-    width: 100%;
-    position: relative;
-    animation: indeterminate-progress 1.5s infinite linear;
-    transform-origin: left;
-    background: linear-gradient(90deg, transparent 0%, var(--progress-bar-fill) 50%, transparent 100%);
-    box-shadow: 0 0 5px var(--progress-bar-fill);
-}
-
-@keyframes indeterminate-progress {
-    0% { transform: translateX(-100%); }
-    50% { transform: translateX(0%); }
-    100% { transform: translateX(100%); }
-}
-
-
-/*프롬창*/
-#prompt-container { /* 페이지 내 플로팅 결과창 */
+/* 프롬프트 결과 창 (Prompt Container) */
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-prompt-container { /* 페이지 내 플로팅 결과창 */
     position: fixed;
-    background-color: rgba(var(--surface-color-rgb), 0.95);
+    background-color: rgba(var(--surface-color-rgb-base), 0.8); /* 투명도 0.8 */
     color: var(--text-color);
-    padding: 15px; /* 패딩 줄임 */
-    border-radius: var(--neumorphic-radius);
-    box-shadow:
-        12px 12px 24px rgba(var(--shadow-dark-rgb), 0.5),
-        -12px -12px 24px rgba(var(--shadow-light-rgb), 0.15);
+    padding: 15px; /* 패딩 증가 */
+    border-radius: 16px; /* 라운드 증가 */
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
     z-index: 9997;
     display: none;
-    width: 320px; /* 크기 줄임 */
-    max-width: calc(100vw - 40px);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    font-family: var(--main-font);
+    width: 320px; /* 너비 증가 */
+    max-width: calc(100vw - 40px); /* 마진 조정 */
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    font-size: 15px;
 
     opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    transform: translateY(25px) scale(0.95); /* 시작 위치 조정 */
+    /* 결과 창 등장/사라짐 애니메이션 (부드러운 스케일 및 슬라이드) */
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-#popup-prompt-results { /* 팝업 내 업로드 결과창 */
-    position: static; /* 팝업 문서 흐름에 맞게 배치 */
-    transform: translateY(10px); /* 초기 애니메이션을 위한 위치 */
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* 애니메이션 유지 */
-
-    background-color: rgba(var(--surface-color-rgb), 0.95);
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-popup-prompt-results { /* 팝업 내 업로드 결과창 */
+    position: relative; /* Fixed 대신 Relative */
+    background-color: rgba(var(--surface-color-rgb-base), 0.8); /* 투명도 0.8 (통일) */
     color: var(--text-color);
-    padding: 15px;
+    padding: 15px; /* 패딩 증가 */
     border-radius: var(--neumorphic-radius);
-    box-shadow:
-        6px 6px 12px rgba(var(--shadow-dark-rgb), 0.3), /* 팝업 내이므로 그림자 약하게 */
-        -6px -6px 12px rgba(var(--shadow-light-rgb), 0.1);
-    z-index: 1; /* 팝업 내에서 다른 요소 위에 있도록 */
-    display: none; /* 기본 숨김 */
-    width: auto; /* 팝업 너비에 맞게 자동으로 조절 */
-    max-width: 100%; /* 부모 요소의 100%를 넘지 않도록 */
-    margin-left: auto; /* 중앙 정렬 (flex 컨테이너에서) */
+    box-shadow: 5px 5px 10px rgba(0,0,0,0.3), -5px -5px 10px rgba(255,255,255,0.06); /* 그림자 강화 */
+    border: var(--glass-border);
+    z-index: 1;
+    display: none;
+    width: auto;
+    max-width: 100%;
+    margin-left: auto;
     margin-right: auto;
-    backdrop-filter: blur(8px); /* 약간 약하게 */
-    -webkit-backdrop-filter: blur(8px);
-    font-family: var(--main-font);
+    margin-top: 25px; /* 마진 증가 */
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+
+    opacity: 0;
+    transform: translateY(20px) scale(0.98); /* 시작 위치 조정 */
+    /* 팝업 결과 창 등장/사라짐 애니메이션 */
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-#prompt-container.show, #popup-prompt-results.show {
+#impu-prompt-container.show, #impu-popup-prompt-results.show {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
+}
+/* hide 클래스를 추가하여 사라질 때 애니메이션 적용 */
+#impu-prompt-container.hide, #impu-popup-prompt-results.hide {
+    opacity: 0;
+    transform: translateY(25px) scale(0.95); /* 사라질 때 원래 시작 위치로 */
 }
 
-.prompt-header {
+
+.impu-prompt-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(var(--text-color-light), 0.3);
+    margin-bottom: 15px; /* 마진 증가 */
+    padding-bottom: 10px; /* 패딩 증가 */
+    border-bottom: 1px solid rgba(var(--text-color-light), 0.25); /* 테두리 강화 */
 }
-.prompt-header strong {
+.impu-prompt-header strong {
     color: var(--text-color);
-    font-size: 20px;
+    font-size: 20px; /* 폰트 크기 증가 */
     font-weight: 600;
-    margin-bottom: 0;
 }
 
-.close-button {
+.impu-close-button {
     background-color: transparent;
     color: var(--text-color-light);
     border: none;
-    font-size: 24px;
+    font-size: 22px; /* 폰트 크기 증가 */
     cursor: pointer;
     outline: none;
-    transition: color var(--transition-duration) ease-in-out, transform var(--transition-duration) ease-in-out;
+    /* 닫기 버튼 호버/클릭 애니메이션 */
+    transition: color var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), transform var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
     padding: 0;
-    width: 32px;
-    height: 32px;
+    width: 32px; /* 크기 증가 */
+    height: 32px; /* 크기 증가 */
     display: flex;
     justify-content: center;
     align-items: center;
     line-height: 1;
     border-radius: 50%;
 }
-.close-button:hover {
+.impu-close-button:hover {
     color: var(--error-color);
-    transform: scale(1.1);
+    transform: scale(1.15); /* 호버 효과 강화 */
 }
-.close-button:active {
+.impu-close-button:active {
     color: var(--text-color-light);
-    transform: scale(0.95);
+    transform: scale(0.9); /* 클릭 효과 강화 */
 }
 
 
-.prompt-group {
-    margin-bottom: 15px; /* 여백 줄임 */
+.impu-prompt-group {
+    margin-bottom: 15px; /* 마진 증가 */
     display: flex;
     flex-direction: column;
-    gap: 8px; /* 텍스트박스와 버튼 사이의 여백 줄임 */
+    gap: 8px; /* 간격 증가 */
 }
 
-.prompt-group:last-child {
+.impu-prompt-group:last-child {
     margin-bottom: 0;
 }
 
-.prompt-group strong {
-    color: var(--primary-color);
-    font-size: 17px;
+/* NovelAI (Gemini 생성) 이런 텍스트의 색상을 밝은 회색으로 변경 */
+.impu-prompt-group strong {
+    color: var(--text-color-darker-light); /* 밝은 회색으로 변경 */
+    font-size: 17px; /* 폰트 크기 증가 */
     font-weight: 500;
 }
 
-.prompt-textarea {
-    width: calc(100% - 20px); /* 패딩 10px씩 고려하여 너비 키움 */
+.impu-prompt-textarea {
+    width: calc(100% - 24px); /* 패딩 고려 */
     min-height: 120px; /* 최소 높이 증가 */
     max-height: 300px; /* 최대 높이 증가 */
     resize: vertical;
-    padding: 10px; /* 패딩 줄임 */
-    font-size: 14px; /* 폰트 크기 줄임 */
+    padding: 12px; /* 패딩 증가 */
+    font-size: 14px;
     color: var(--text-color);
-    background: var(--background-color);
-    border: none;
+    background: rgba(var(--surface-color-rgb-base), 0.3);
+    border: var(--glass-border);
     border-radius: var(--neumorphic-radius);
-    box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-    transition: box-shadow var(--transition-duration) ease-in-out;
+    box-shadow: inset 3px 3px 6px rgba(0,0,0,0.4), inset -3px -3px 6px rgba(255,255,255,0.03);
+    transition: box-shadow var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), border-color var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1); /* Cubic-bezier 함수 적용 */
     outline: none;
-    font-family: var(--main-font);
 }
-.prompt-textarea:focus {
-    box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light), 0 0 0 2px var(--primary-color);
-}
-
-.copy-button {
-    align-self: flex-start; /* 버튼을 텍스트박스 시작점에 맞춤 */
-    padding: 8px 12px; /* 버튼 패딩 줄임 */
-    font-size: 13px; /* 버튼 폰트 크기 줄임 */
-    margin-top: 0px; /* 텍스트박스와의 상단 여백 제거 */
+.impu-prompt-textarea:focus {
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.6), inset -1px -1px 3px rgba(255,255,255,0.02), 0 0 0 3px var(--accent-color);
+    border-color: var(--accent-color);
 }
 
-/* EXIF 데이터 그룹 스타일은 이제 사용되지 않지만, 혹시 모를 대비해서 남겨둠 */
-.exif-data-group strong {
-    color: var(--status-warning-bg); /* EXIF는 경고색으로 구분 */
+.impu-copy-button {
+    align-self: flex-start;
+    padding: 8px 12px; /* 패딩 증가 */
+    font-size: 13px; /* 폰트 크기 증가 */
+    margin-top: 0px;
+    background: var(--gradient-accent);
+    color: var(--text-color);
+    /* 테두리 부드럽게 변경 */
+    border: 1px solid transparent; /* 기본 테두리는 투명하게 */
+    border-image: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05)) 1; /* 그라데이션 테두리 */
+    border-image-slice: 1;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.3), -3px -3px 6px rgba(255,255,255,0.03); /* 그림자 강화 */
+    border-radius: 7px; /* 라운드 증가 */
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    /* 애니메이션 트랜지션 Cubic-bezier 및 시간 미세 조정 */
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-
-/*토스트*/
-#toast-container {
-    position: fixed;
+/* 흐르는 애니메이션 오버레이 */
+.impu-copy-button::before {
+    content: '';
+    position: absolute;
     top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Cubic-bezier 함수 적용 */
+    transform: skewX(-25deg);
+    z-index: -1;
+}
+
+.impu-copy-button:hover::before {
+    left: 120%;
+}
+
+.impu-copy-button:hover {
+    background: var(--gradient-hover); /* 호버 시 그라데이션 반전 */
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.4), -4px -4px 8px rgba(255,255,255,0.05);
+}
+.impu-copy-button:active {
+    box-shadow: inset 1px 1px 3px rgba(0,0,0,0.4), inset -1px -1px 3px rgba(255,255,255,0.05);
+    transform: translateY(0);
+}
+/* 토스트 알림 (다이내믹 아일랜드 스타일) */
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-toast-container {
+    position: fixed;
+    top: 20px; /* 위치 조정 */
     left: 50%;
     transform: translateX(-50%);
     z-index: 10000;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 10px; /* 상단 여백 */
-    pointer-events: none; /* 클릭 이벤트 무시 */
+    padding-top: 15px; /* 패딩 증가 */
+    pointer-events: none;
 }
 
-.toast {
-    background-color: rgba(var(--surface-color-rgb), 0.9);
+.impu-toast {
+    background-color: rgba(var(--surface-color-rgb-base), 0.9); /* 투명도 0.9 */
     color: var(--text-color);
-    padding: 15px 25px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 4px 8px rgba(var(--shadow-dark-rgb), 0.2);
-    font-family: var(--main-font);
-    font-size: 16px;
+    padding: 16px 28px; /* 패딩을 약간 줄여 크기 조정 */
+    border-radius: 28px; /* 라운드 증가 */
+    margin-bottom: 15px; /* 마진 조정 */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.35), 0 3px 6px rgba(255,255,255,0.06); /* 그림자 조정 */
+    border: var(--glass-border);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+
+    font-size: 18px; /* 폰트 크기 조정 */
+    min-width: 300px; /* 최소 너비 조정 */
+    max-width: 90vw; /* 너무 커지지 않도록 최대 너비 추가 */
+    /* text-align: center; */ /* flex 사용 시 제거 */
+    pointer-events: auto;
+
+    display: flex; /* Flexbox 활성화 */
+    flex-direction: column; /* 아이템 세로 정렬 */
+    align-items: center; /* 아이템 가로 중앙 정렬 */
+    gap: 8px; /* 아이콘과 텍스트 사이 간격 조정 (메시지와 '클릭하지 마세요' 사이 간격도 포함) */
+
     opacity: 0;
-    transform: translateY(-50px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-    min-width: 250px;
-    text-align: center;
-    pointer-events: auto; /* 내부 요소는 클릭 가능하도록 */
+    transform: translateY(-80px) scale(0.9); /* 시작 위치 및 스케일 조정 */
+    /* 토스트 등장/사라짐 애니메이션 (Mac OS 알림 스타일) */
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s ease-in-out;
+    overflow: hidden; /* 프로그레스 바가 토스트 경계를 넘지 않도록 */
+    position: relative; /* 프로그레스 바를 위한 relative 설정 */
 }
 
-.toast.show {
+.impu-toast.show {
     opacity: 1;
-    transform: translateY(20px);
+    transform: translateY(0px) scale(1);
 }
 
-.toast.hide {
+.impu-toast.hide {
     opacity: 0;
-    transform: translateY(-30px);
+    transform: translateY(-80px) scale(0.9); /* 사라질 때 스케일 조정 */
 }
 
-.toast.success { background-color: rgba(var(--status-success-bg-rgb), 0.9); color: var(--status-text-color); }
-.toast.error { background-color: rgba(var(--status-error-bg-rgb), 0.9); color: var(--status-text-color); }
-.toast.warning { background-color: rgba(var(--status-warning-bg-rgb), 0.9); color: var(--status-warning-text-color); }
-.toast.info { background-color: rgba(var(--status-info-bg-rgb), 0.9); color: var(--status-text-color); }
+/* 토스트 내부 컨텐츠 정렬을 위한 래퍼 추가 */
+.impu-toast-content-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* 아이콘과 메시지 텍스트 사이 간격 */
+    width: 100%; /* 전체 너비 차지 */
+    justify-content: center; /* 내용 중앙 정렬 */
+}
+
+/* 토스트 상태별 아이콘 및 색상 */
+.impu-toast-icon {
+    width: 32px; /* 크기 조정 */
+    height: 32px; /* 크기 조정 */
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 18px; /* 폰트 크기 조정 */
+    flex-shrink: 0;
+}
+
+.impu-toast.success .impu-toast-icon { background-color: var(--status-success-bg); }
+.impu-toast.error .impu-toast-icon { background-color: var(--status-error-bg); }
+.impu-toast.warning .impu-toast-icon { background-color: var(--status-warning-bg); }
+.impu-toast.info .impu-toast-icon { background-color: var(--status-info-bg); }
+/* loading 타입일 때만 아이콘이 표시되도록 content.js에서 제어하므로, 아이콘 기본 숨김은 필요 없음 */
+
+.impu-toast.success .impu-toast-icon::before { content: '✔'; }
+.impu-toast.error .impu-toast-icon::before { content: '✕'; }
+.impu-toast.warning .impu-toast-icon::before { content: '!'; }
+.impu-toast.info .impu-toast-icon::before { content: 'i'; }
+
+.impu-toast-message-text {
+    flex-grow: 1;
+    text-align: center; /* 텍스트 중앙 정렬 */
+    font-weight: 500;
+}
 
 
+/* "다른 곳을 클릭하지 마세요" 텍스트 스타일 조정 */
+.impu-no-click-message {
+    font-size: 11px; /* 조금 작게 */
+    color: var(--text-color-light); /* 조금 어둡게 (기존에도 있었지만 명시적으로 다시 적용) */
+    text-align: center;
+    width: 100%; /* 너비는 그대로 유지 */
+    opacity: 0.8; /* 약간의 투명도 */
+    margin-top: 5px; /* 메시지 아래로 약간 간격 */
+    display: block; /* 줄바꿈을 위해 블록 요소로 */
+}
 
-@keyframes spin { /* 로더 제거로 인해 더 이상 사용되지 않을 수 있음 */
+/* 스피너 대신 토스트 전체를 가로로 채우는 프로그레스 바 */
+.impu-toast-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 4px; /* 프로그레스 바의 높이 */
+    background-color: rgba(var(--image-color-light), 0.2); /* 배경색 (은은하게) */
+    overflow: hidden; /* 채워지는 부분 넘치지 않도록 */
+}
+
+.impu-toast-progress-fill {
+    height: 100%;
+    width: 0; /* 초기 너비 0 */
+    background: linear-gradient(90deg, var(--image-color-medium), var(--image-color-light)); /* 그라데이션 채움 */
+    animation: impu-toast-fill-animation 3s linear infinite; /* 애니메이션 적용 */
+    transform-origin: left; /* 왼쪽에서 시작 */
+}
+
+@keyframes impu-toast-fill-animation {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+@keyframes impu-spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-@keyframes indeterminate-progress {
+@keyframes impu-indeterminate-progress {
     0% { transform: translateX(-100%); }
     50% { transform: translateX(0%); }
     100% { transform: translateX(100%); }
+}
+
+/* 캡처 오버레이 및 선택 박스 스타일 */
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-selection-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3); /* 더 연한 반투명 검정 배경으로 변경 (선택 사항) */
+    z-index: 99999;
+    cursor: crosshair;
+    display: none;
+    /* backdrop-filter: blur(8px); */ /* 블러 효과 제거 */
+}
+/* show/hide 클래스를 추가하여 애니메이션 제어 */
+#impu-selection-overlay.show {
+    opacity: 1;
+}
+#impu-selection-overlay.hide {
+    opacity: 0;
+}
+
+
+#impu-selection-box {
+    border: 3px solid var(--accent-color); /* 더 굵고 선명한 테두리 */
+    background: transparent; /* 내부 배경을 투명하게 하여 강조 */
+    position: absolute;
+    display: none;
+}
+
+/* 캡처 가이드 텍스트 */
+#impu-capture-guide-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    background: rgba(0, 0, 0, 0.7); /* 배경 투명도 증가 */
+    padding: 12px 18px; /* 패딩 증가 */
+    border-radius: 10px; /* 라운드 증가 */
+    font-size: 17px; /* 폰트 크기 증가 */
+    font-weight: 500;
+    pointer-events: none;
+    white-space: nowrap;
+    text-shadow: 0 0 6px rgba(0,0,0,0.6); /* 그림자 강화 */
+    /* 가이드 텍스트 등장/사라짐 애니메이션 */
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 캡처 버튼 컨테이너 (선택 박스 위) */
+/* 이 부분은 제거될 것이므로 변경하지 않음 */
+/*
+#impu-capture-buttons-container {
+    position: absolute;
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(var(--surface-color-rgb-base), 0.85);
+    border-radius: 14px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+    border: var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: auto;
+}
+
+#impu-capture-buttons-container.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.impu-capture-action-button {
+    background: var(--gradient-accent);
+    color: var(--text-color);
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-image: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1)) 1;
+    border-image-slice: 1;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.impu-capture-action-button:hover {
+    background: var(--gradient-hover);
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.4);
+}
+
+.impu-capture-action-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: skewX(-25deg);
+    z-index: -1;
+}
+
+.impu-capture-action-button:hover::before {
+    left: 120%;
+}
+*/
+
+/* 캡처 이미지 확인 모달 스타일 */
+#impu-capture-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* 더 어두운 배경 */
+    z-index: 100000; /* 최상위 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none; /* 초기에는 이벤트 받지 않음 */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#impu-capture-modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto; /* Show 시 이벤트 활성화 */
+}
+
+#impu-capture-modal-container {
+    background-color: rgba(var(--surface-color-rgb-base), 0.95);
+    border-radius: 18px; /* 더 둥글게 */
+    box-shadow: var(--glass-shadow);
+    border: var(--glass-border);
+    padding: 25px; /* 패딩 증가 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 90vw;
+    max-height: 90vh;
+    transform: translateY(-20px) scale(0.95); /* 시작 애니메이션 */
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    opacity: 0;
+}
+
+#impu-capture-modal-overlay.show #impu-capture-modal-container {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+#impu-modal-image-preview {
+    max-width: 100%;
+    max-height: 50vh; /* 이미지 높이 제한 */
+    border-radius: 12px;
+    margin-bottom: 20px; /* 마진 증가 */
+    object-fit: contain;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+#impu-modal-action-buttons {
+    display: flex;
+    gap: 15px; /* 버튼 간격 증가 */
+}
+
+#impu-modal-action-buttons .impu-neumorphic-button {
+    padding: 12px 25px; /* 버튼 패딩 증가 */
+    font-size: 16px; /* 버튼 폰트 크기 증가 */
 }

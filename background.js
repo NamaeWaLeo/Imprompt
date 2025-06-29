@@ -5,43 +5,78 @@ chrome.runtime.onInstalled.addListener(() => {
         title: "이미지 프롬프트 추출",
         contexts: ["image"]
     });
+    // 선택 영역 이미지 추출 컨텍스트 메뉴 추가
+    chrome.contextMenus.create({
+        id: "extractSelectedAreaPrompt",
+        title: "선택 영역 프롬프트 추출",
+        contexts: ["page", "selection"]
+    });
 });
 
 // 컨텍스트 메뉴 클릭 리스너
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     if (info.menuItemId === "extractImagePrompt" && info.srcUrl) {
-        // 컨텍스트 메뉴를 통해 이미지를 클릭한 경우, content.js에 URL을 보내 처리를 위임합니다.
-        // content.js가 직접 이미지 로드, 메타데이터 추출, WebP 변환을 수행하도록 합니다.
-        chrome.tabs.sendMessage(tab.id, {
-            action: 'initiateGeminiProcessingFromUrl', // 새로운 액션 타입
-            srcUrl: info.srcUrl
+        if (tab && tab.id) {
+            chrome.tabs.sendMessage(tab.id, {
+                action: 'initiateGeminiProcessingFromUrl',
+                srcUrl: info.srcUrl
+            });
+        } else {
+            console.error("background.js: Could not get valid tab ID for image URL processing.");
+            chrome.notifications.create({
+                type: 'basic',
+                iconUrl: 'images/icon.png',
+                title: 'Imprompt 오류',
+                message: '현재 탭 정보를 가져올 수 없어 이미지 처리 기능을 시작할 수 없습니다.'
+            });
+        }
+    } else if (info.menuItemId === "extractSelectedAreaPrompt") {
+        // 현재 활성 탭의 ID와 윈도우 ID를 모두 조회하여 사용
+        chrome.tabs.query({ active: true, currentWindow: true, windowType: 'normal' }, function(tabs) { // windowType: 'normal' 추가
+            if (tabs && tabs.length > 0 && tabs[0].id && tabs[0].windowId) {
+                const activeTabId = tabs[0].id;
+                const activeWindowId = tabs[0].windowId; // 윈도우 ID도 얻어옴
+
+                // 메시지를 보낼 때 activeTabId와 activeWindowId를 request 객체에 명시적으로 담아 보냅니다.
+                chrome.tabs.sendMessage(activeTabId, {
+                    action: 'startAreaSelection',
+                    tabId: activeTabId,
+                    windowId: activeWindowId // 윈도우 ID도 함께 전달
+                });
+            } else {
+                console.error("background.js: Could not get active tab or window ID for area selection (or not a normal window).");
+                chrome.notifications.create({
+                    type: 'basic',
+                    iconUrl: 'images/icon.png',
+                    title: 'Imprompt 오류',
+                    message: '현재 활성 탭 또는 창 정보를 가져올 수 없어 영역 선택 기능을 시작할 수 없습니다. 일반 웹페이지에서 시도해주세요.'
+                });
+            }
         });
     }
 });
 
 /**
  * 이미지 Blob을 WebP 형식의 Base64 데이터 URL로 변환합니다.
+ * OffscreenCanvas를 사용하여 워커 환경에서 변환합니다.
  * @param {Blob} blob - 변환할 이미지 Blob.
- * @param {number} quality - WebP 인코딩 품질 (0.0 ~ 1.0). 기본값은 0.8.
+ * @param {number} quality - WebP 인코딩 품질 (0.0 ~ 1.0). 기본값은 0.6.
  * @returns {Promise<string>} WebP 형식의 Base64 데이터 URL.
  */
-async function convertBlobToWebPBase64InWorker(blob, quality = 0.8) {
+async function convertBlobToWebPBase64InWorker(blob, quality = 0.6) {
     return new Promise(async (resolve, reject) => {
         try {
-            const bitmap = await createImageBitmap(blob); // Blob에서 ImageBitmap 생성
+            const bitmap = await createImageBitmap(blob);
 
-            // OffscreenCanvas 생성 및 그리기
             const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
             const ctx = canvas.getContext('2d');
             ctx.drawImage(bitmap, 0, 0);
 
-            // WebP Blob으로 변환
             const webpBlob = await canvas.convertToBlob({
                 type: 'image/webp',
                 quality: quality
             });
 
-            // Blob을 Base64로 변환
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result);
             reader.onerror = reject;
@@ -54,13 +89,66 @@ async function convertBlobToWebPBase64InWorker(blob, quality = 0.8) {
 }
 
 /**
+ * 이미지를 지정된 크기로 리사이즈하고 WebP 형식의 Base64 데이터 URL로 변환합니다.
+ * @param {Blob} blob - 원본 이미지 Blob.
+ * @param {number} maxWidth - 최대 너비.
+ * @param {number} maxHeight - 최대 높이.
+ * @param {number} quality - WebP 인코딩 품질 (0.0 ~ 1.0).
+ * @returns {Promise<string|null>} WebP 형식의 Base64 데이터 URL 또는 null (실패 시).
+ */
+async function resizeImageAndConvertToWebP(blob, maxWidth, maxHeight, quality = 0.7) {
+    return new Promise(async (resolve) => {
+        try {
+            const bitmap = await createImageBitmap(blob);
+            
+            let width = bitmap.width;
+            let height = bitmap.height;
+
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = Math.round((height * maxWidth) / width);
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = Math.round((width * maxHeight) / height);
+                    height = maxHeight;
+                }
+            }
+            
+            if (width < 64 && height < 64) {
+                const scale = Math.max(64 / width, 64 / height);
+                width = Math.round(width * scale);
+                height = Math.round(height * scale);
+            }
+
+
+            const canvas = new OffscreenCanvas(width, height);
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(bitmap, 0, 0, width, height);
+
+            const webpBlob = await canvas.convertToBlob({
+                type: 'image/webp',
+                quality: quality
+            });
+
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(webpBlob);
+
+        } catch (e) {
+            console.warn("resizeImageAndConvertToWebP 실패:", e);
+            resolve(null);
+        }
+    });
+}
+
+
+/**
  * 워커에서 PNG Blob의 메타데이터를 추출합니다.
- * 이 함수는 content.js의 getPngTextChunks와 동일한 로직을 사용하며,
- * background 스크립트에서도 직접 호출 가능하도록 별도로 정의합니다.
  * @param {Blob} blob - PNG 이미지 Blob.
  * @returns {Promise<{ exifString: string | null, novelai: string | null, stableDiffusion: string | null }>}
- * 추출된 텍스트 청크를 병합한 문자열, NovelAI 프롬프트, Stable Diffusion 프롬프트.
- * 없으면 각 필드에 null.
  */
 function getPngTextChunksInWorker(blob) {
     return new Promise((resolve, reject) => {
@@ -101,9 +189,9 @@ function getPngTextChunksInWorker(blob) {
                 console.log(`[PNG PARSER Worker] Found chunk: Type=${type}, Length=${length}, Offset=${offset - 8}`);
 
                 if (type === 'IHDR' || type === 'IDAT' || type === 'IEND' || length === 0) {
-                    offset += length; // 데이터 스킵
-                    offset += 4; // CRC 스킵
-                    continue; // 다음 청크로 이동
+                    offset += length;
+                    offset += 4;
+                    continue;
                 }
 
                 if (length > 0 && length < 500000) {
@@ -121,14 +209,14 @@ function getPngTextChunksInWorker(blob) {
                         } else if (type === 'iTXt') {
                             let currentDataOffset = 0;
                             let keywordEnd = currentDataOffset;
-                            while (keywordEnd < chunkData.length && chunkData[keywordEnd] !== 0x00) {
+                            while (keywordEnd < chunkData.length && chunkData[currentDataOffset] !== 0x00) {
                                 keywordEnd++;
                             }
                             const keyword = new TextDecoder('utf-8').decode(chunkData.subarray(currentDataOffset, keywordEnd));
                             currentDataOffset = keywordEnd + 1;
 
-                            currentDataOffset++; // compressionFlag
-                            currentDataOffset++; // compressionMethod
+                            currentDataOffset++;
+                            currentDataOffset++;
 
                             let langTagEnd = currentDataOffset;
                             while (langTagEnd < chunkData.length && chunkData[langTagEnd] !== 0x00) {
@@ -351,6 +439,7 @@ function getPngTextChunksInWorker(blob) {
     });
 }
 
+
 // popup 페이지로부터 메시지 수신
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Gemini API 키 유효성 검사 요청 처리
@@ -365,68 +454,87 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                 }
             })
             .then(result => {
-                sendResponse(result); // 유효성 검사 결과를 popup.js로 다시 보냅니다.
+                sendResponse(result);
             })
             .catch(error => {
                 sendResponse({ success: false, error: `네트워크 오류: ${error.message}` });
             });
-        return true; // 비동기 응답을 위해 true를 반환해야 합니다.
+        return true;
     }
 
     // 이미지 처리 및 프롬프트 생성 요청 처리 (content.js에서 호출)
     if (request.action === "processImageWithGemini") {
-        const imageDataUrl = request.imageDataUrl; // content script에서 전달받은 Base64 이미지 데이터
+        const imageDataUrl = request.imageDataUrl;
+        const extractionMethod = request.extractionMethod;
 
-        // 크롬 스토리지에서 Gemini API 키와 선택된 모델, 프롬프트 길이, 사용자 정의 프롬프트 정보를 가져옵니다.
-        chrome.storage.sync.get(['geminiApiKey', 'geminiModel', 'promptLength', 'customPositivePrompt', 'customNegativePrompt'], async (data) => {
+        // content.js에서 전달받은 메타데이터
+        const detectedNovelaiPrompt = request.detectedNovelaiPrompt;
+        const detectedStableDiffusionPrompt = request.detectedStableDiffusionPrompt;
+        const detectedExifComment = request.detectedExifComment;
+
+
+        chrome.storage.local.get(['geminiApiKey', 'geminiModel', 'promptLength', 'customPositivePrompt', 'customNegativePrompt'], async (data) => {
             const geminiApiKey = data.geminiApiKey;
             const geminiModel = data.geminiModel || 'gemini-1.5-flash';
             const promptLength = data.promptLength || 'medium';
             const customPositivePrompt = data.customPositivePrompt || '';
             const customNegativePrompt = data.customNegativePrompt || '';
 
-            if (!geminiApiKey) {
-                console.error("Gemini API 키가 설정되지 않았습니다.");
-                sendResponse({ error: "Gemini API 키가 설정되지 않았습니다. 확장 프로그램 팝업에서 설정해주세요." });
-                return;
-            }
+            const tabId = sender.tab ? sender.tab.id : null; // sender.tab이 null일 수 있으므로 유효성 검사
 
-            let lengthInstruction = "";
-            let detailInstruction = ""; // 길이별 디테일 지시사항 추가
-            switch (promptLength) {
-                case "short":
-                    lengthInstruction = "간결하고 핵심적인 프롬프트를 생성해 주세요 (최대 30단어).";
-                    detailInstruction = "이미지의 주요 요소와 가장 중요한 특징만 간략하게 언급해주세요.";
-                    break;
-                case "medium":
-                    lengthInstruction = "보통 길이의 자세한 프롬프트를 생성해 주세요 (최대 80단어).";
-                    detailInstruction = "주요 요소와 함께 적절한 세부 사항, 분위기를 포함해주세요.";
-                    break;
-                case "long":
-                    lengthInstruction = "매우 길고 상세하며 풍부한 설명을 담은 프롬프트를 생성해 주세요 (최대 200단어).";
-                    detailInstruction = "주요 요소 외에 배경, 조명, 색상, 구도, 감정 등 이미지의 모든 디테일을 풍부하게 설명해주세요. 특정 스타일이나 분위기, 미세한 질감까지 언급해주세요.";
-                    break;
-                case "very-long": // 매우 길게 추가
-                    lengthInstruction = "극도로 길고, 상세하며, 창의적인 프롬프트를 생성해 주세요 (최대 400단어).";
-                    detailInstruction = "이미지 내 모든 시각적 요소를 가능한 한 상세하게 묘사하고, 잠재적인 서사나 분위기, 광원 효과, 텍스처, 미세한 표정 변화, 배경의 깊이감, 구체적인 물체 배치까지 상상하여 포함해주세요. 예술적 스타일, 카메라 앵글, 렌즈 효과, 필름 종류 등 기술적인 디테일도 추가하여 풍부한 프롬프트를 만들어 주세요.";
-                    break;
-            }
+            const sendProgress = (message, type = 'loading', show = true, progress = -1) => {
+                if (tabId) {
+                    chrome.tabs.sendMessage(tabId, { action: "updateProgressWindow", message, type, show, progress });
+                }
+            };
 
-            // 사용자 정의 긍정/부정 프롬프트 추가
-            const finalPositiveInstructions = customPositivePrompt ? ` 사용자 정의 긍정 프롬프트: ${customPositivePrompt}.` : '';
-            const finalNegativeInstructions = customNegativePrompt ? ` 사용자 정의 부정 프롬프트: ${customNegativePrompt}.` : '';
+            let novelaiPrompt = "N/A";
+            let stableDiffusionPrompt = "N/A";
 
-            try {
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    { text: `이 이미지에 대한 NovelAI와 Stable Diffusion 프롬프트를 JSON 형식으로 생성해 주세요. ${lengthInstruction} ${detailInstruction}${finalPositiveInstructions}${finalNegativeInstructions} 응답은 오직 JSON 블록만 포함해야 하며, 다른 설명 텍스트나 서론/결론은 제외해 주세요.
+            if (extractionMethod === 'gemini' || extractionMethod === 'both') {
+                if (!geminiApiKey) {
+                    console.error("Gemini API 키가 설정되지 않았습니다.");
+                    sendProgress("Gemini API 키가 설정되지 않았습니다. 확장 프로그램 팝업에서 설정해주세요.", "error", false);
+                    sendResponse({ error: "Gemini API 키가 설정되지 않았습니다. 확장 프로그램 팝업에서 설정해주세요." });
+                    return;
+                }
+
+                let lengthInstruction = "";
+                let detailInstruction = "";
+                switch (promptLength) {
+                    case "short":
+                        lengthInstruction = "간결하고 핵심적인 프롬프트를 생성해 주세요 (최대 30단어).";
+                        detailInstruction = "이미지의 주요 요소와 가장 중요한 특징만 간략하게 언급해주세요.";
+                        break;
+                    case "medium":
+                        lengthInstruction = "보통 길이의 자세한 프롬프트를 생성해 주세요 (최대 80단어).";
+                        detailInstruction = "주요 요소와 함께 적절한 세부 사항, 분위기를 포함해주세요.";
+                        break;
+                    case "long":
+                        lengthInstruction = "매우 길고 상세하며 풍부한 설명을 담은 프롬프트를 생성해 주세요 (최대 200단어).";
+                        detailInstruction = "주요 요소 외에 배경, 조명, 색상, 구도, 감정 등 이미지의 모든 디테일을 풍부하게 설명해주세요. 특정 스타일이나 분위기, 미세한 질감까지 언급해주세요.";
+                        break;
+                    case "very-long":
+                        lengthInstruction = "극도로 길고, 상세하며, 창의적인 프롬프트를 생성해 주세요 (최대 400단어).";
+                        detailInstruction = "이미지 내 모든 시각적 요소를 가능한 한 상세하게 묘사하고, 잠재적인 서사나 분위기, 광원 효과, 텍스처, 미세한 표정 변화, 배경의 깊이감, 구체적인 물체 배치까지 상상하여 포함해주세요. 예술적 스타일, 카메라 앵글, 렌즈 효과, 필름 종류 등 기술적인 디테일도 추가하여 풍부한 프롬프트를 만들어 주세요.";
+                        break;
+                }
+
+                const finalPositiveInstructions = customPositivePrompt ? ` 사용자 정의 긍정 프롬프트: ${customPositivePrompt}.` : '';
+                const finalNegativeInstructions = customNegativePrompt ? ` 사용자 정의 부정 프롬프트: ${customNegativePrompt}.` : '';
+
+                sendProgress('Gemini AI 모델에 이미지 전송 중...', 'loading', true);
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        { text: `이 이미지에 대한 NovelAI와 Stable Diffusion 프롬프트를 JSON 형식으로 생성해 주세요. ${lengthInstruction} ${detailInstruction}${finalPositiveInstructions}${finalNegativeInstructions} 응답은 오직 JSON 블록만 포함해야 하며, 다른 설명 텍스트나 서론/결론은 제외해 주세요.
 
 **NovelAI 프롬프트 규칙:**
 - **강화 가중치**: 단어를 중괄호 {}로 감싸세요. 예: {high quality}, {{masterpiece}}
@@ -455,80 +563,108 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 }
 \`\`\`
 반드시 위 JSON 형식과 규칙을 지켜서 영어로 프롬프트를 생성해주세요.`
-                                    },
-                                    {
-                                        inline_data: {
-                                            mime_type: "image/webp", // WebP로 변경되었음을 명시
-                                            data: imageDataUrl.split(',')[1]
+                                        },
+                                        {
+                                            inline_data: {
+                                                mime_type: "image/webp",
+                                                data: imageDataUrl.split(',')[1]
+                                            }
                                         }
-                                    }
-                                ]
-                            }
-                        ]
-                    })
-                });
-
-                const result = await response.json();
-                console.log("BACKGROUND - Gemini API Raw 응답:", result); // Raw 응답 로깅
-
-                if (result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts) {
-                    const fullGeminiText = result.candidates[0].content.parts[0].text;
-                    let jsonString = '';
-
-                    const jsonMatch = fullGeminiText.match(/```json\n([\s\S]*?)\n```/);
-                    if (jsonMatch && jsonMatch[1]) {
-                        jsonString = jsonMatch[1];
-                    } else {
-                        jsonString = fullGeminiText.trim();
-                    }
-
-                    let parsedResponse;
-                    try {
-                        parsedResponse = JSON.parse(jsonString);
-                        console.log("BACKGROUND - Parsed JSON 응답:", parsedResponse); // 파싱된 응답 로깅
-                    } catch (e) {
-                        console.error("BACKGROUND - Gemini 응답 JSON 파싱 실패:", e, "원본 텍스트:", fullGeminiText);
-                        sendResponse({
-                            error: `Gemini 응답 파싱 실패. 응답 형식을 확인해주세요. (원본 일부: ${jsonString.substring(0, 150)}...)`
-                        });
-                        return;
-                    }
-
-                    const novelaiPrompt = parsedResponse.novelai || "프롬프트 생성 실패 (NovelAI)";
-                    const stableDiffusionPrompt = parsedResponse.stable_diffusion || "프롬프트 생성 실패 (Stable Diffusion)";
-
-                    // 프롬프트 히스토리에 저장
-                    chrome.storage.sync.get('promptHistory', (data) => {
-                        const history = data.promptHistory || [];
-                        history.push({
-                            novelai: novelaiPrompt,
-                            stable_diffusion: stableDiffusionPrompt,
-                            timestamp: new Date().toISOString(), // ISO 8601 형식으로 저장
-                            // thumbnail: imageDataUrl // 이미지 썸네일도 저장할 수 있으나, storage 용량 고려 필요
-                        });
-                        // 최대 20개까지만 저장 (예시)
-                        if (history.length > 20) {
-                            history = history.slice(history.length - 20);
-                        }
-                        chrome.storage.sync.set({ promptHistory: history }, () => {
-                            console.log("Prompt saved to history.");
-                        });
+                                    ]
+                                }
+                            ]
+                        })
                     });
 
+                    const result = await response.json();
+                    console.log("BACKGROUND - Gemini API Raw 응답:", result);
 
-                    console.log("BACKGROUND - Final Prompts to send:", { novelai: novelaiPrompt, stable_diffusion: stableDiffusionPrompt }); // 최종 프롬프트 로깅
-                    sendResponse({ novelai: novelaiPrompt, stable_diffusion: stableDiffusionPrompt }); // content.js로 결과 전송
-                } else if (result.error) {
-                    console.error("BACKGROUND - Gemini API 오류 응답:", result.error);
-                    sendResponse({ error: `Gemini API 오류: ${result.error.message}` });
-                } else {
-                    console.error("BACKGROUND - 예상치 못한 Gemini API 응답 형식:", result);
-                    sendResponse({ error: "Gemini API 응답 형식 오류입니다. 자세한 응답: " + JSON.stringify(result).substring(0, 200) + "..." });
+                    if (result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts) {
+                        const fullGeminiText = result.candidates[0].content.parts[0].text;
+                        let jsonString = '';
+
+                        const jsonMatch = fullGeminiText.match(/```json\n([\s\S]*?)\n```/);
+                        if (jsonMatch && jsonMatch[1]) {
+                            jsonString = jsonMatch[1];
+                        } else {
+                            jsonString = fullGeminiText.trim();
+                        }
+
+                        let parsedResponse;
+                        try {
+                            parsedResponse = JSON.parse(jsonString);
+                            console.log("BACKGROUND - Parsed JSON 응답:", parsedResponse);
+                        } catch (e) {
+                            console.error("BACKGROUND - Gemini 응답 JSON 파싱 실패:", e, "원본 텍스트:", fullGeminiText);
+                            sendProgress(`Gemini 응답 파싱 실패. 응답 형식을 확인해주세요.`, "error", false);
+                            sendResponse({
+                                error: `Gemini 응답 파싱 실패. 응답 형식을 확인해주세요. (원본 일부: ${jsonString.substring(0, 150)}...)`
+                            });
+                            return;
+                        }
+
+                        novelaiPrompt = parsedResponse.novelai || "프롬프트 생성 실패 (NovelAI)";
+                        stableDiffusionPrompt = parsedResponse.stable_diffusion || "프롬프트 생성 실패 (Stable Diffusion)";
+                        sendProgress('프롬프트 생성 완료!', 'success', false);
+
+                    } else if (result.error) {
+                        console.error("BACKGROUND - Gemini API 오류 응답:", result.error);
+                        sendProgress(`Gemini API 오류: ${result.error.message}`, "error", false);
+                        sendResponse({ error: `Gemini API 오류: ${result.error.message}` });
+                        return;
+                    } else {
+                        console.error("BACKGROUND - 예상치 못한 Gemini API 응답 형식:", result);
+                        sendProgress("Gemini API 응답 형식 오류입니다.", "error", false);
+                        sendResponse({ error: "Gemini API 응답 형식 오류입니다. 자세한 응답: " + JSON.stringify(result).substring(0, 200) + "..." });
+                        return;
+                    }
+                } catch (error) {
+                    console.error("BACKGROUND - Gemini API 호출 중 네트워크 오류:", error);
+                    sendProgress(`Gemini API 호출 중 네트워크 오류: ${error.message}`, "error", false);
+                    sendResponse({ error: `Gemini API 호출 중 네트워크 오류: ${error.message}` });
+                    return;
                 }
-            } catch (error) {
-                console.error("BACKGROUND - Gemini API 호출 중 네트워크 오류:", error);
-                sendResponse({ error: `Gemini API 호출 중 네트워크 오류: ${error.message}` });
+            } else {
+                sendProgress('메타데이터 추출 완료!', 'success', false);
             }
+
+            // 프롬프트 히스토리에 저장
+            chrome.storage.local.get('promptHistory', async (data) => {
+                let history = data.promptHistory || [];
+
+                let thumbnailDataUrl = null;
+                try {
+                    const originalBlob = await (await fetch(imageDataUrl)).blob();
+                    thumbnailDataUrl = await resizeImageAndConvertToWebP(originalBlob, 128, 128, 0.7);
+                } catch (thumbErr) {
+                    console.warn("썸네일 생성 실패:", thumbErr);
+                }
+
+                history.push({
+                    novelai: novelaiPrompt,
+                    stable_diffusion: stableDiffusionPrompt,
+                    timestamp: new Date().toISOString(),
+                    detectedNovelai: detectedNovelaiPrompt, // content.js에서 받은 값 사용
+                    detectedStableDiffusion: detectedStableDiffusionPrompt, // content.js에서 받은 값 사용
+                    detectedExifComment: detectedExifComment, // content.js에서 받은 값 사용
+                    thumbnail: thumbnailDataUrl
+                });
+                if (history.length > 20) {
+                    history = history.slice(history.length - 20);
+                }
+                chrome.storage.local.set({ promptHistory: history }, () => {
+                    console.log("Prompt saved to history.");
+                });
+            });
+
+            console.log("BACKGROUND - Final Prompts to send:", { novelai: novelaiPrompt, stable_diffusion: stableDiffusionPrompt });
+            sendResponse({
+                novelai: novelaiPrompt,
+                stable_diffusion: stableDiffusionPrompt,
+                detectedNovelaiPrompt: detectedNovelaiPrompt, // 최종 응답에도 포함하여 content.js로 다시 보냄
+                detectedStableDiffusionPrompt: detectedStableDiffusionPrompt,
+                detectedExifComment: detectedExifComment
+            });
         });
         return true;
     }
@@ -536,51 +672,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // 팝업에서 이미지 업로드하여 Gemini 처리 요청
     if (request.action === "processImageWithGeminiFromPopup") {
         const imageDataUrl = request.imageDataUrl;
-        const imageType = request.imageType; // 팝업에서 전달된 이미지 타입
+        const imageType = request.imageType;
 
-        chrome.storage.sync.get(['geminiApiKey', 'geminiModel', 'promptLength', 'customPositivePrompt', 'customNegativePrompt'], async (data) => {
+        const sendProgressToPopup = (message, type = 'loading') => {
+            chrome.runtime.sendMessage({ action: "updatePopupStatus", message, type });
+        };
+
+        chrome.storage.local.get(['geminiApiKey', 'geminiModel', 'promptLength', 'customPositivePrompt', 'customNegativePrompt', 'extractionMethod'], async (data) => {
             const geminiApiKey = data.geminiApiKey;
             const geminiModel = data.geminiModel || 'gemini-1.5-flash';
             const promptLength = data.promptLength || 'medium';
             const customPositivePrompt = data.customPositivePrompt || '';
             const customNegativePrompt = data.customNegativePrompt || '';
+            const extractionMethod = data.extractionMethod || 'both';
 
-            if (!geminiApiKey) {
-                console.error("Gemini API 키가 설정되지 않았습니다.");
-                sendResponse({ error: "Gemini API 키가 설정되지 않았습니다. 확장 프로그램 팝업에서 설정해주세요." });
-                return;
-            }
+            sendProgressToPopup('이미지 분석 시작...', 'loading');
 
-            let lengthInstruction = "";
-            let detailInstruction = "";
-            switch (promptLength) {
-                case "short":
-                    lengthInstruction = "간결하고 핵심적인 프롬프트를 생성해 주세요 (최대 30단어).";
-                    detailInstruction = "이미지의 주요 요소와 가장 중요한 특징만 간략하게 언급해주세요.";
-                    break;
-                case "medium":
-                    lengthInstruction = "보통 길이의 자세한 프롬프트를 생성해 주세요 (최대 80단어).";
-                    detailInstruction = "주요 요소와 함께 적절한 세부 사항, 분위기를 포함해주세요.";
-                    break;
-                case "long":
-                    lengthInstruction = "매우 길고 상세하며 풍부한 설명을 담은 프롬프트를 생성해 주세요 (최대 200단어).";
-                    detailInstruction = "주요 요소 외에 배경, 조명, 색상, 구도, 감정 등 이미지의 모든 디테일을 풍부하게 설명해주세요. 특정 스타일이나 분위기, 미세한 질감까지 언급해주세요.";
-                    break;
-                case "very-long":
-                    lengthInstruction = "극도로 길고, 상세하며, 창의적인 프롬프트를 생성해 주세요 (최대 400단어).";
-                    detailInstruction = "이미지 내 모든 시각적 요소를 가능한 한 상세하게 묘사하고, 잠재적인 서사나 분위기, 광원 효과, 텍스처, 미세한 표정 변화, 배경의 깊이감, 구체적인 물체 배치까지 상상하여 포함해주세요. 예술적 스타일, 카메라 앵글, 렌즈 효과, 필름 종류 등 기술적인 디테일도 추가하여 풍부한 프롬프트를 만들어 주세요.";
-                    break;
-            }
-
-            const finalPositiveInstructions = customPositivePrompt ? ` 사용자 정의 긍정 프롬프트: ${customPositivePrompt}.` : '';
-            const finalNegativeInstructions = customNegativePrompt ? ` 사용자 정의 부정 프롬프트: ${customNegativePrompt}.` : '';
-
-            try {
-                // Data URL을 Blob으로 변환하여 메타데이터 추출 및 WebP 변환
+            let extractedExifData = { exifString: null, novelai: null, stableDiffusion: null };
+            if (extractionMethod === 'metadata' || extractionMethod === 'both') {
+                sendProgressToPopup('PNG 메타데이터 추출 중...', 'loading');
                 const blob = await (await fetch(imageDataUrl)).blob();
-
-                let extractedExifData = { exifString: null, novelai: null, stableDiffusion: null };
-                // 이미지 타입이 PNG인 경우에만 메타데이터 추출 시도
                 if (imageType === 'image/png') {
                     try {
                         extractedExifData = await getPngTextChunksInWorker(blob);
@@ -589,19 +700,60 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
                         console.warn("[BACKGROUND] PNG metadata extraction failed for popup upload:", e);
                     }
                 }
+            }
 
-                const webpDataUrl = await convertBlobToWebPBase64InWorker(blob);
+            let webpDataUrl = null;
+            if (extractionMethod === 'gemini' || extractionMethod === 'both') {
+                if (!geminiApiKey) {
+                    sendProgressToPopup("Gemini API 키가 설정되지 않았습니다. 확장 프로그램 팝업에서 설정해주세요.", "error");
+                    sendResponse({ error: "Gemini API 키가 설정되지 않았습니다. 확장 프로그램 팝업에서 설정해주세요." });
+                    return;
+                }
+                sendProgressToPopup('이미지 압축 및 WebP 변환 중...', 'loading');
+                const blob = await (await fetch(imageDataUrl)).blob();
+                webpDataUrl = await convertBlobToWebPBase64InWorker(blob);
+            }
 
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        contents: [
-                            {
-                                parts: [
-                                    { text: `이 이미지에 대한 NovelAI와 Stable Diffusion 프롬프트를 JSON 형식으로 생성해 주세요. ${lengthInstruction} ${detailInstruction}${finalPositiveInstructions}${finalNegativeInstructions} 응답은 오직 JSON 블록만 포함해야 하며, 다른 설명 텍스트나 서론/결론은 제외해 주세요.
+            let novelaiPrompt = "N/A";
+            let stableDiffusionPrompt = "N/A";
+
+            if (extractionMethod === 'gemini' || extractionMethod === 'both') {
+                let lengthInstruction = "";
+                let detailInstruction = "";
+                switch (promptLength) {
+                    case "short":
+                        lengthInstruction = "간결하고 핵심적인 프롬프트를 생성해 주세요 (최대 30단어).";
+                        detailInstruction = "이미지의 주요 요소와 가장 중요한 특징만 간략하게 언급해주세요.";
+                        break;
+                    case "medium":
+                        lengthInstruction = "보통 길이의 자세한 프롬프트를 생성해 주세요 (최대 80단어).";
+                        detailInstruction = "주요 요소와 함께 적절한 세부 사항, 분위기를 포함해주세요.";
+                        break;
+                    case "long":
+                        lengthInstruction = "매우 길고 상세하며 풍부한 설명을 담은 프롬프트를 생성해 주세요 (최대 200단어).";
+                        detailInstruction = "주요 요소 외에 배경, 조명, 색상, 구도, 감정 등 이미지의 모든 디테일을 풍부하게 설명해주세요. 특정 스타일이나 분위기, 미세한 질감까지 언급해주세요.";
+                        break;
+                    case "very-long":
+                        lengthInstruction = "극도로 길고, 상세하며, 창의적인 프롬프트를 생성해 주세요 (최대 400단어).";
+                        detailInstruction = "이미지 내 모든 시각적 요소를 가능한 한 상세하게 묘사하고, 잠재적인 서사나 분위기, 광원 효과, 텍스처, 미세한 표정 변화, 배경의 깊이감, 구체적인 물체 배치까지 상상하여 포함해주세요. 예술적 스타일, 카메라 앵글, 렌즈 효과, 필름 종류 등 기술적인 디테일도 추가하여 풍부한 프롬프트를 만들어 주세요.";
+                        break;
+                }
+
+                const finalPositiveInstructions = customPositivePrompt ? ` 사용자 정의 긍정 프롬프트: ${customPositivePrompt}.` : '';
+                const finalNegativeInstructions = customNegativePrompt ? ` 사용자 정의 부정 프롬프트: ${customNegativePrompt}.` : '';
+
+                sendProgressToPopup('Gemini API로 프롬프트 생성 요청 중...', 'loading');
+                try {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiApiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        { text: `이 이미지에 대한 NovelAI와 Stable Diffusion 프롬프트를 JSON 형식으로 생성해 주세요. ${lengthInstruction} ${detailInstruction}${finalPositiveInstructions}${finalNegativeInstructions} 응답은 오직 JSON 블록만 포함해야 하며, 다른 설명 텍스트나 서론/결론은 제외해 주세요.
 
 **NovelAI 프롬프트 규칙:**
 - **강화 가중치**: 단어를 중괄호 {}로 감싸세요. 예: {high quality}, {{masterpiece}}
@@ -630,96 +782,179 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 }
 \`\`\`
 반드시 위 JSON 형식과 규칙을 지켜서 영어로 프롬프트를 생성해주세요.`
-                                    },
-                                    {
-                                        inline_data: {
-                                            mime_type: "image/webp", // WebP로 변경되었음을 명시
-                                            data: webpDataUrl.split(',')[1]
+                                        },
+                                        {
+                                            inline_data: {
+                                                mime_type: "image/webp",
+                                                data: webpDataUrl.split(',')[1]
+                                            }
                                         }
-                                    }
-                                ]
-                            }
-                        ]
-                    })
-                });
+                                    ]
+                                }
+                            ]
+                        })
+                    });
 
-                const result = await response.json();
-                console.log("BACKGROUND - Gemini API Raw 응답:", result); // Raw 응답 로깅
+                    const result = await response.json();
+                    console.log("BACKGROUND - Gemini API Raw 응답:", result);
 
-                if (result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts) {
-                    const fullGeminiText = result.candidates[0].content.parts[0].text;
-                    let jsonString = '';
+                    if (result.candidates && result.candidates[0] && result.candidates[0].content && result.candidates[0].content.parts) {
+                        const fullGeminiText = result.candidates[0].content.parts[0].text;
+                        let jsonString = '';
 
-                    const jsonMatch = fullGeminiText.match(/```json\n([\s\S]*?)\n```/);
-                    if (jsonMatch && jsonMatch[1]) {
-                        jsonString = jsonMatch[1];
+                        const jsonMatch = fullGeminiText.match(/```json\n([\s\S]*?)\n```/);
+                        if (jsonMatch && jsonMatch[1]) {
+                            jsonString = jsonMatch[1];
+                        } else {
+                            jsonString = fullGeminiText.trim();
+                        }
+
+                        let parsedResponse;
+                        try {
+                            parsedResponse = JSON.parse(jsonString);
+                            console.log("BACKGROUND - Parsed JSON 응답:", parsedResponse);
+                        } catch (e) {
+                            console.error("BACKGROUND - Gemini 응답 JSON 파싱 실패:", e, "원본 텍스트:", fullGeminiText);
+                            sendProgressToPopup(`Gemini 응답 파싱 실패. 응답 형식을 확인해주세요.`, "error");
+                            sendResponse({
+                                error: `Gemini 응답 파싱 실패. 응답 형식을 확인해주세요. (원본 일부: ${jsonString.substring(0, 150)}...)`
+                            });
+                            return;
+                        }
+
+                        novelaiPrompt = parsedResponse.novelai || "프롬프트 생성 실패 (NovelAI)";
+                        stableDiffusionPrompt = parsedResponse.stable_diffusion || "프롬프트 생성 실패 (Stable Diffusion)";
+                        sendProgressToPopup('프롬프트 생성 완료!', 'success');
+
+                    } else if (result.error) {
+                        console.error("BACKGROUND - Gemini API 오류 응답:", result.error);
+                        sendProgressToPopup(`Gemini API 오류: ${result.error.message}`, "error");
+                        sendResponse({ error: `Gemini API 오류: ${result.error.message}` });
+                        return;
                     } else {
-                        jsonString = fullGeminiText.trim();
-                    }
-
-                    let parsedResponse;
-                    try {
-                        parsedResponse = JSON.parse(jsonString);
-                        console.log("BACKGROUND - Parsed JSON 응답:", parsedResponse); // 파싱된 응답 로깅
-                    } catch (e) {
-                        console.error("BACKGROUND - Gemini 응답 JSON 파싱 실패:", e, "원본 텍스트:", fullGeminiText);
-                        sendResponse({
-                            error: `Gemini 응답 파싱 실패. 응답 형식을 확인해주세요. (원본 일부: ${jsonString.substring(0, 150)}...)`
-                        });
+                        console.error("BACKGROUND - 예상치 못한 Gemini API 응답 형식:", result);
+                        sendProgressToPopup("Gemini API 응답 형식 오류입니다.", "error");
+                        sendResponse({ error: "Gemini API 응답 형식 오류입니다. 자세한 응답: " + JSON.stringify(result).substring(0, 200) + "..." });
                         return;
                     }
-
-                    const novelaiPrompt = parsedResponse.novelai || "프롬프트 생성 실패 (NovelAI)";
-                    const stableDiffusionPrompt = parsedResponse.stable_diffusion || "프롬프트 생성 실패 (Stable Diffusion)";
-
-                    // 팝업에서 호출된 경우, 팝업에게 메타데이터 프롬프트도 함께 전달
-                    if (sender.url && sender.url.includes("popup.html")) {
-                        sendResponse({
-                            novelai: novelaiPrompt,
-                            stable_diffusion: stableDiffusionPrompt,
-                            detectedNovelaiPrompt: extractedExifData.novelai,
-                            detectedStableDiffusionPrompt: extractedExifData.stableDiffusion,
-                            detectedExifComment: extractedExifData.exifString
-                        });
-                    } else { // content.js에서 호출된 경우
-                        // 프롬프트 히스토리에 저장
-                        chrome.storage.sync.get('promptHistory', (data) => {
-                            const history = data.promptHistory || [];
-                            history.push({
-                                novelai: novelaiPrompt,
-                                stable_diffusion: stableDiffusionPrompt,
-                                timestamp: new Date().toISOString(),
-                            });
-                            // 최대 20개까지만 저장 (예시)
-                            if (history.length > 20) {
-                                history = history.slice(history.length - 20);
-                            }
-                            chrome.storage.sync.set({ promptHistory: history }, () => {
-                                console.log("Prompt saved to history.");
-                            });
-                        });
-                        sendResponse({ novelai: novelaiPrompt, stable_diffusion: stableDiffusionPrompt });
-                    }
-                } else if (result.error) {
-                    console.error("BACKGROUND - Gemini API 오류 응답:", result.error);
-                    sendResponse({ error: `Gemini API 오류: ${result.error.message}` });
-                } else {
-                    console.error("BACKGROUND - 예상치 못한 Gemini API 응답 형식:", result);
-                    sendResponse({ error: "Gemini API 응답 형식 오류입니다. 자세한 응답: " + JSON.stringify(result).substring(0, 200) + "..." });
+                } catch (error) {
+                    console.error("BACKGROUND - Gemini API 호출 중 네트워크 오류:", error);
+                    sendProgressToPopup(`Gemini API 호출 중 네트워크 오류: ${error.message}`, "error");
+                    sendResponse({ error: `Gemini API 호출 중 네트워크 오류: ${error.message}` });
+                    return;
                 }
-            } catch (error) {
-                console.error("BACKGROUND - Gemini API 호출 중 네트워크 오류:", error);
-                sendResponse({ error: `Gemini API 호출 중 네트워크 오류: ${error.message}` });
+            } else {
+                sendProgressToPopup('메타데이터 추출 완료!', 'success');
+                novelaiPrompt = extractedExifData.novelai || "메타데이터에서 NovelAI 프롬프트 추출 실패";
+                stableDiffusionPrompt = extractedExifData.stableDiffusion || "메타데이터에서 Stable Diffusion 프롬pt 추출 실패";
             }
+
+            // 프롬프트 히스토리에 저장 (팝업 업로드도 히스토리에 저장)
+            chrome.storage.local.get('promptHistory', async (data) => {
+                let history = data.promptHistory || [];
+
+                let thumbnailDataUrl = null;
+                try {
+                    const originalBlob = await (await fetch(imageDataUrl)).blob();
+                    thumbnailDataUrl = await resizeImageAndConvertToWebP(originalBlob, 128, 128, 0.7);
+                } catch (thumbErr) {
+                    console.warn("썸네일 생성 실패:", thumbErr);
+                }
+
+                history.push({
+                    novelai: novelaiPrompt,
+                    stable_diffusion: stableDiffusionPrompt,
+                    timestamp: new Date().toISOString(),
+                    detectedNovelai: extractedExifData.novelai,
+                    detectedStableDiffusion: extractedExifData.stableDiffusion,
+                    detectedExifComment: extractedExifData.exifString,
+                    thumbnail: thumbnailDataUrl,
+                    usedExtractionMethod: extractionMethod
+                });
+                if (history.length > 20) {
+                    history = history.slice(history.length - 20);
+                }
+                chrome.storage.local.set({ promptHistory: history }, () => {
+                    console.log("Prompt saved to history from popup.");
+                });
+            });
+
+            sendResponse({
+                novelai: novelaiPrompt,
+                stable_diffusion: stableDiffusionPrompt,
+                detectedNovelaiPrompt: extractedExifData.novelai,
+                detectedStableDiffusionPrompt: extractedExifData.stableDiffusion,
+                detectedExifComment: extractedExifData.exifString,
+                usedExtractionMethod: extractionMethod
+            });
         });
         return true;
     }
 
-    // content.js에서 플로팅 버튼 가시성 설정을 요청할 때
-    if (request.action === 'getFloatingButtonVisibility') {
-        chrome.storage.sync.get('hideFloatingButton', (data) => {
-            sendResponse({ hideFloatingButton: data.hideFloatingButton || false });
+    // content.js로부터 캡처할 영역 정보를 받는 리스너 추가 (background에서만 captureVisibleTab 가능)
+    if (request.action === "captureArea") {
+        const { x, y, width, height } = request.area;
+        const tabId = request.tabId;
+        const windowId = request.windowId;
+
+        if (!tabId || !windowId) {
+            console.error("No tab ID or window ID provided for capture.");
+            chrome.notifications.create({
+                type: 'basic',
+                iconUrl: 'images/icon.png',
+                title: 'Imprompt 오류',
+                message: '캡처할 탭 또는 창 정보를 찾을 수 없습니다.'
+            });
+            sendResponse({ success: false, error: "No tab ID or window ID." });
+            return true;
+        }
+
+        chrome.windows.get(windowId, { populate: true }, async function(targetWindow) {
+            if (chrome.runtime.lastError || !targetWindow || targetWindow.type !== 'normal' || !targetWindow.tabs.some(t => t.id === tabId)) {
+                console.error("Capture failed: Target window is no longer valid, not 'normal' type, or tab not found within it.", chrome.runtime.lastError);
+                chrome.tabs.sendMessage(tabId, { action: "showToast", message: `화면 캡처 실패: 탭을 찾을 수 없거나 접근할 수 없습니다.`, type: "error" });
+                sendResponse({ success: false, error: "Target window not found or not accessible." });
+                return;
+            }
+            
+            chrome.tabs.captureVisibleTab(windowId, { format: "png" }, async function(dataUrl) {
+                if (chrome.runtime.lastError) {
+                    console.error("Capture visible tab error:", chrome.runtime.lastError.message);
+                    chrome.tabs.sendMessage(tabId, { action: "showToast", message: `화면 캡처 실패: ${chrome.runtime.lastError.message}`, type: "error" });
+                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                    return;
+                }
+                
+                if (!dataUrl) {
+                    chrome.tabs.sendMessage(tabId, { action: "showToast", message: "캡처된 이미지를 가져올 수 없습니다.", type: "error" });
+                    sendResponse({ success: false, error: "No data URL from capture." });
+                    return;
+                }
+
+                try {
+                    const imageBitmap = await createImageBitmap(await (await fetch(dataUrl)).blob());
+
+                    const canvas = new OffscreenCanvas(width, height);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(imageBitmap, x, y, width, height, 0, 0, width, height);
+
+                    const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
+                    const croppedImageDataUrl = await convertBlobToWebPBase64InWorker(croppedBlob, 0.8); // 모달에 보낼 때 품질 좀 더 높임
+
+                    // 캡처된 이미지를 content.js의 모달로 전송
+                    chrome.tabs.sendMessage(tabId, {
+                        action: 'showCapturedImageModal', // 새로운 액션
+                        imageDataUrl: croppedImageDataUrl,
+                    });
+                    sendResponse({ success: true, message: "Image cropped and sent to modal." });
+
+                } catch (e) {
+                    console.error("Error cropping or processing image:", e);
+                    chrome.tabs.sendMessage(tabId, { action: "showToast", message: `이미지 처리 오류: ${e.message}`, type: "error" });
+                    sendResponse({ success: false, error: e.message });
+                }
+            });
         });
-        return true; // 비동기 응답을 위해 true를 반환해야 합니다.
+        return true;
     }
 });
