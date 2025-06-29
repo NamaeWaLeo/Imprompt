@@ -694,18 +694,18 @@ h1 {
 
 
 /*프롬창*/
-#prompt-container {
+#prompt-container { /* 페이지 내 플로팅 결과창 */
     position: fixed;
     background-color: rgba(var(--surface-color-rgb), 0.95);
     color: var(--text-color);
-    padding: 20px;
+    padding: 15px; /* 패딩 줄임 */
     border-radius: var(--neumorphic-radius);
     box-shadow:
         12px 12px 24px rgba(var(--shadow-dark-rgb), 0.5),
         -12px -12px 24px rgba(var(--shadow-light-rgb), 0.15);
     z-index: 9997;
     display: none;
-    width: 360px;
+    width: 320px; /* 크기 줄임 */
     max-width: calc(100vw - 40px);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
@@ -716,7 +716,30 @@ h1 {
     transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
-#prompt-container.show {
+#popup-prompt-results { /* 팝업 내 업로드 결과창 */
+    position: static; /* 팝업 문서 흐름에 맞게 배치 */
+    transform: translateY(10px); /* 초기 애니메이션을 위한 위치 */
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out; /* 애니메이션 유지 */
+
+    background-color: rgba(var(--surface-color-rgb), 0.95);
+    color: var(--text-color);
+    padding: 15px;
+    border-radius: var(--neumorphic-radius);
+    box-shadow:
+        6px 6px 12px rgba(var(--shadow-dark-rgb), 0.3), /* 팝업 내이므로 그림자 약하게 */
+        -6px -6px 12px rgba(var(--shadow-light-rgb), 0.1);
+    z-index: 1; /* 팝업 내에서 다른 요소 위에 있도록 */
+    display: none; /* 기본 숨김 */
+    width: auto; /* 팝업 너비에 맞게 자동으로 조절 */
+    max-width: 100%; /* 부모 요소의 100%를 넘지 않도록 */
+    margin-left: auto; /* 중앙 정렬 (flex 컨테이너에서) */
+    margin-right: auto;
+    backdrop-filter: blur(8px); /* 약간 약하게 */
+    -webkit-backdrop-filter: blur(8px);
+    font-family: var(--main-font);
+}
+
+#prompt-container.show, #popup-prompt-results.show {
     opacity: 1;
     transform: translateY(0);
 }
@@ -764,10 +787,10 @@ h1 {
 
 
 .prompt-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* 여백 줄임 */
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px; /* 텍스트박스와 버튼 사이의 여백 줄임 */
 }
 
 .prompt-group:last-child {
@@ -781,12 +804,12 @@ h1 {
 }
 
 .prompt-textarea {
-    width: calc(100% - 28px);
-    min-height: 100px;
-    max-height: 250px;
+    width: calc(100% - 20px); /* 패딩 10px씩 고려하여 너비 키움 */
+    min-height: 120px; /* 최소 높이 증가 */
+    max-height: 300px; /* 최대 높이 증가 */
     resize: vertical;
-    padding: 14px;
-    font-size: 15px;
+    padding: 10px; /* 패딩 줄임 */
+    font-size: 14px; /* 폰트 크기 줄임 */
     color: var(--text-color);
     background: var(--background-color);
     border: none;
@@ -801,11 +824,17 @@ h1 {
 }
 
 .copy-button {
-    align-self: flex-end;
-    padding: 12px 20px;
-    font-size: 15px;
-    margin-top: 10px;
+    align-self: flex-start; /* 버튼을 텍스트박스 시작점에 맞춤 */
+    padding: 8px 12px; /* 버튼 패딩 줄임 */
+    font-size: 13px; /* 버튼 폰트 크기 줄임 */
+    margin-top: 0px; /* 텍스트박스와의 상단 여백 제거 */
 }
+
+/* EXIF 데이터 그룹 스타일은 이제 사용되지 않지만, 혹시 모를 대비해서 남겨둠 */
+.exif-data-group strong {
+    color: var(--status-warning-bg); /* EXIF는 경고색으로 구분 */
+}
+
 
 /*토스트*/
 #toast-container {

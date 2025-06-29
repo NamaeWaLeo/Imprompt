@@ -100,7 +100,7 @@
             <div class="setting-section">
                 <label class="setting-label">플로팅 버튼 가시성:</label>
                 <div class="checkbox-group">
-                    <input type="checkbox" id="hideFloatingButton" class="neumorphic-checkbox" checked="checked">
+                    <input type="checkbox" id="hideFloatingButton" class="neumorphic-checkbox">
                     <label for="hideFloatingButton" class="neumorphic-label">페이지에서 플로팅 버튼 숨기기</label>
                 </div>
             </div>
@@ -116,7 +116,13 @@
                 <label for="customNegativePrompt" class="setting-label">사용자 정의 부정 프롬프트 (제외):</label>
                 <textarea id="customNegativePrompt" class="custom-prompt-textarea" placeholder="low quality, bad anatomy, blurry, ... 등"></textarea>
             </div>
-
+            
+            <div class="setting-section" style="margin-top: 30px;">
+                <label for="imageUpload" class="setting-label">이미지 파일 업로드 (PNG/JPG):</label>
+                <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/jpg" class="neumorphic-input">
+                <button id="uploadImageButton" class="neumorphic-button">업로드 및 프롬프트 생성</button>
+                <div id="imageUploadStatus" class="status-message"></div>
+            </div>
 
             <button id="saveOtherSettingsButton" class="neumorphic-button">설정 저장</button>
             <div id="otherSettingsStatus" class="status-message"></div>

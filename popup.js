@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', restoreOptions);
 // API 키 관련 버튼 리스너
 document.getElementById('saveApiKeyButton').addEventListener('click', saveApiKeyAndValidate);
 
-// 다른 설정 저장 버튼 리스너 (기존과 동일하게 변경 감지 시 자동 저장)
-// document.getElementById('saveOtherSettingsButton').addEventListener('click', saveOtherSettings); // 이 버튼은 이제 수동 클릭이 아니라 변경 감지 시 자동 저장
+// 이미지 업로드 버튼 리스너 추가
+document.getElementById('uploadImageButton').addEventListener('click', uploadImageAndProcess);
 
 // 아이콘 크기 슬라이더 값 표시
 const iconSizeInput = document.getElementById('iconSize');
@@ -171,6 +171,7 @@ function restoreOptions() {
             iconSizeValueSpan.textContent = `${savedIconSize}%`;
         }
 
+        // 플로팅 버튼 숨기기 설정 복원
         const savedHideFloatingButton = data.hideFloatingButton || false;
         const hideFloatingButtonCheckbox = document.getElementById('hideFloatingButton');
         if (hideFloatingButtonCheckbox) {
@@ -192,6 +193,163 @@ function restoreOptions() {
     });
 }
 
+// 이미지 업로드 및 처리 함수
+async function uploadImageAndProcess() {
+    const fileInput = document.getElementById('imageUpload');
+    const statusElement = document.getElementById('imageUploadStatus');
+    const files = fileInput.files;
+
+    if (files.length === 0) {
+        statusElement.textContent = '업로드할 이미지를 선택해주세요.';
+        statusElement.style.color = 'var(--error-color)';
+        setTimeout(() => { statusElement.textContent = ''; }, 3000);
+        return;
+    }
+
+    const file = files[0];
+    if (!file.type.startsWith('image/')) {
+        statusElement.textContent = '이미지 파일만 업로드할 수 있습니다.';
+        statusElement.style.color = 'var(--error-color)';
+        setTimeout(() => { statusElement.textContent = ''; }, 3000);
+        return;
+    }
+
+    statusElement.textContent = '이미지 업로드 및 처리 중...';
+    statusElement.style.color = 'var(--text-color-light)';
+
+    // 기존 결과창이 있다면 먼저 제거
+    const existingResults = document.getElementById('popup-prompt-results');
+    if (existingResults) {
+        existingResults.remove();
+    }
+
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = async () => {
+            const imageDataUrl = reader.result;
+
+            // popup에서 직접 background.js로 메시지를 보내 처리 요청
+            // imageType을 함께 보내 background.js에서 PNG 메타데이터 추출 여부를 결정하도록 함
+            const response = await chrome.runtime.sendMessage({
+                action: "processImageWithGeminiFromPopup",
+                imageDataUrl: imageDataUrl,
+                imageType: file.type // 이미지 타입도 함께 보냄
+            });
+
+            if (response.error) {
+                statusElement.textContent = `처리 실패: ${response.error}`;
+                statusElement.style.color = 'var(--error-color)';
+            } else {
+                statusElement.textContent = '프롬프트가 성공적으로 생성되었습니다!';
+                statusElement.style.color = 'var(--success-color)';
+                
+                // 팝업 내에서 결과를 직접 표시
+                displayPromptResultsInPopup(
+                    response.novelai,
+                    response.stable_diffusion,
+                    response.detectedNovelaiPrompt, // background.js에서 넘어온 detectedNovelaiPrompt
+                    response.detectedStableDiffusionPrompt, // background.js에서 넘어온 detectedStableDiffusionPrompt
+                    response.detectedExifComment // background.js에서 넘어온 detectedExifComment
+                );
+            }
+            setTimeout(() => { statusElement.textContent = ''; }, 3000);
+        };
+        reader.onerror = (error) => {
+            statusElement.textContent = `파일 읽기 오류: ${error.message}`;
+            statusElement.style.color = 'var(--error-color)';
+            setTimeout(() => { statusElement.textContent = ''; }, 3000);
+        };
+
+    } catch (error) {
+        statusElement.textContent = `이미지 처리 오류: ${error.message}`;
+        statusElement.style.color = 'var(--error-color)';
+        setTimeout(() => { statusElement.textContent = ''; }, 3000);
+    }
+}
+
+/**
+ * 팝업 내에서 프롬프트 결과를 표시하는 함수
+ * (content.js의 promptContainer 로직을 팝업에 맞게 재사용 또는 유사하게 구현)
+ */
+function displayPromptResultsInPopup(geminiNovelai, geminiStableDiffusion, detectedNovelai, detectedStableDiffusion, detectedExifComment) {
+    const resultsContainer = document.createElement('div');
+    resultsContainer.id = 'popup-prompt-results';
+    resultsContainer.classList.add('neumorphic'); // 스타일 적용
+    resultsContainer.style.marginTop = '20px';
+    resultsContainer.style.position = 'relative'; // 닫기 버튼 위치 조절용
+    resultsContainer.style.display = 'none'; // 초기에는 숨김 상태로 시작
+    resultsContainer.style.padding = '15px'; // CSS 파일에 이미 있지만 명시적으로
+
+    let detectedPromptHtml = '';
+    if (detectedNovelai || detectedStableDiffusion || detectedExifComment) {
+        let combinedDetectedPrompt = '';
+        if (detectedNovelai) {
+            combinedDetectedPrompt += `NovelAI 원문: ${detectedNovelai}\n`;
+        }
+        if (detectedStableDiffusion && detectedStableDiffusion !== detectedNovelai) {
+            combinedDetectedPrompt += `Stable Diffusion 원문: ${detectedStableDiffusion}\n`;
+        }
+        if (!combinedDetectedPrompt && detectedExifComment) { // 둘 다 없는데 exifComment가 있다면 exifComment를 원문으로 사용 (최종 fallback)
+             combinedDetectedPrompt = `원문 메타데이터: \n${detectedExifComment}\n`;
+        }
+
+        if(combinedDetectedPrompt) {
+            detectedPromptHtml = `
+                <div class="prompt-group detected-prompt-group">
+                    <strong>이미지에서 추출된 프롬프트:</strong>
+                    <textarea class="prompt-textarea neumorphic-input" readonly>${combinedDetectedPrompt.trim()}</textarea>
+                    <button class="copy-button neumorphic-button" data-copy-target="detected_combined_popup">모두 복사</button>
+                </div>
+            `;
+        }
+    }
+
+    resultsContainer.innerHTML = `
+        <div class="prompt-header" style="border-bottom: 1px solid rgba(var(--text-color-light), 0.3); padding-bottom: 10px; margin-bottom: 15px;">
+            <strong style="font-size: 18px; color: var(--text-color);">생성된 프롬프트</strong>
+            <button class="close-button" id="closePopupResults" style="position: absolute; right: 5px; top: 5px;">X</button>
+        </div>
+        ${detectedPromptHtml}
+        <div class="prompt-group">
+            <strong>NovelAI (Gemini 생성):</strong>
+            <textarea class="prompt-textarea neumorphic-input" readonly>${geminiNovelai}</textarea>
+            <button class="copy-button neumorphic-button" data-copy-target="novelai_popup">복사</button>
+        </div>
+        <div class="prompt-group">
+            <strong>Stable Diffusion (Gemini 생성):</strong>
+            <textarea class="prompt-textarea neumorphic-input" readonly>${geminiStableDiffusion}</textarea>
+            <button class="copy-button neumorphic-button" data-copy-target="stable_diffusion_popup">복사</button>
+        </div>
+    `;
+    
+    document.getElementById('settings-tab').appendChild(resultsContainer);
+
+    // 결과창을 표시하고 애니메이션 적용
+    resultsContainer.style.display = 'block';
+    requestAnimationFrame(() => {
+        resultsContainer.classList.add('show');
+    });
+
+
+    resultsContainer.querySelectorAll('.copy-button').forEach(copyBtn => {
+        copyBtn.addEventListener('click', (e) => {
+            const textarea = e.target.previousElementSibling;
+            if (textarea && textarea.classList.contains('prompt-textarea')) {
+                copyToClipboard(textarea.value);
+            }
+        });
+    });
+
+    document.getElementById('closePopupResults').addEventListener('click', () => {
+        resultsContainer.classList.remove('show');
+        resultsContainer.addEventListener('transitionend', () => {
+            resultsContainer.remove();
+        }, { once: true });
+    });
+}
+
+
 /**
  * 프롬프트 히스토리를 로드하여 화면에 표시합니다.
  */
@@ -208,9 +366,6 @@ function loadAndDisplayHistory() {
         }
         noHistoryMessage.style.display = 'none';
 
-        // 최신 항목이 위로 오도록 역순으로 정렬
-        // 주의: 역순 정렬 후 원본 인덱스를 사용하기 위해 `history.length - 1 - index`를 계산해야 합니다.
-        // 또는, 데이터를 복사하여 역순 정렬하고 인덱스를 직접 사용합니다.
         const reversedHistory = [...history].reverse(); // 원본 배열을 유지하면서 복사본을 역순으로
         
         reversedHistory.forEach((item, index) => {
@@ -264,7 +419,7 @@ function copyToClipboard(text) {
         .then(() => {
             console.log('Text copied to clipboard from popup:', text);
             // 팝업에서는 showToast 함수가 없으므로 별도 메시지 처리
-            const statusElement = document.getElementById('otherSettingsStatus'); // 기존 상태 메시지 공간 활용
+            const statusElement = document.getElementById('otherSettingsStatus') || document.getElementById('imageUploadStatus'); // 기존 상태 메시지 공간 활용
             if (statusElement) {
                 statusElement.textContent = '클립보드에 복사되었습니다!';
                 statusElement.style.color = 'var(--success-color)';
@@ -273,7 +428,7 @@ function copyToClipboard(text) {
         })
         .catch(err => {
             console.error('Failed to copy text from popup:', err);
-            const statusElement = document.getElementById('otherSettingsStatus');
+            const statusElement = document.getElementById('otherSettingsStatus') || document.getElementById('imageUploadStatus');
             if (statusElement) {
                 statusElement.textContent = '클립보드 복사에 실패했습니다.';
                 statusElement.style.color = 'var(--error-color)';
@@ -297,7 +452,7 @@ function deleteHistoryItem(index) {
                 const statusElement = document.getElementById('otherSettingsStatus'); // 임시 알림
                 if (statusElement) {
                     statusElement.textContent = '히스토리 항목이 삭제되었습니다.';
-                    statusElement.style.color = 'var(--warning-color)';
+                    statusElement.style.color = 'var(--status-warning-bg)';
                     setTimeout(() => { statusElement.textContent = ''; }, 1500);
                 }
             });
