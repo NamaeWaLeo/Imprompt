@@ -34,11 +34,8 @@ document.querySelectorAll('.impu-collapsible-header').forEach(header => {
         const section = header.closest('.impu-collapsible-section');
         section.classList.toggle('active'); // active 클래스 토글
         const icon = header.querySelector('.impu-collapse-icon');
-        if (section.classList.contains('active')) {
-            icon.textContent = '▼';
-        } else {
-            icon.textContent = '▶';
-        }
+        // 아이콘 텍스트 업데이트
+        icon.textContent = section.classList.contains('active') ? '▼' : '▶';
     });
 });
 
@@ -51,6 +48,25 @@ document.getElementById('impu-saveOtherSettingsButton').addEventListener('click'
 document.getElementById('impu-clearAllHistoryButton').addEventListener('click', clearAllHistory);
 document.getElementById('impu-resetAllSettingsButton').addEventListener('click', resetAllSettings);
 
+
+/**
+ * 팝업 내의 상태 메시지 영역에 진행 상태를 표시합니다.
+ * @param {HTMLElement} statusElement - 메시지를 표시할 DOM 요소 (예: impu-imageUploadStatus).
+ * @param {boolean} show - true면 표시, false면 숨김.
+ * @param {string} message - 표시할 메시지.
+ */
+function updateSpecificProcessStatus(statusElement, show, message = '') {
+    if (show) {
+        statusElement.innerHTML = `<span class="impu-spinner"></span> ${message}`;
+        statusElement.classList.add('loading');
+        statusElement.style.color = 'var(--text-color-light)';
+    } else {
+        statusElement.textContent = '';
+        statusElement.classList.remove('loading');
+    }
+}
+
+
 /**
  * Gemini API 키를 저장하고 유효성을 검사합니다.
  */
@@ -60,13 +76,16 @@ async function saveApiKeyAndValidate() {
     const apiKeyInput = document.getElementById('impu-geminiApiKey');
 
     statusElement.textContent = 'API 키 확인 중...';
-    statusElement.style.color = 'var(--impu-text-color-light)';
+    statusElement.style.color = 'var(--text-color-light)';
     apiKeyInput.classList.remove('impu-error-input', 'impu-success-input'); // 이전 상태 클래스 제거
+    statusElement.classList.add('loading'); // 스피너 표시
 
     if (!apiKey) {
         statusElement.textContent = 'API 키를 입력해주세요.';
-        statusElement.style.color = 'var(--impu-error-color)';
+        statusElement.style.color = 'var(--error-color)';
         apiKeyInput.classList.add('impu-error-input');
+        statusElement.classList.remove('loading'); // 스피너 숨김
+        setTimeout(() => { statusElement.textContent = ''; apiKeyInput.classList.remove('impu-error-input'); }, 3000);
         return;
     }
 
@@ -76,19 +95,21 @@ async function saveApiKeyAndValidate() {
             apiKey: apiKey
         });
 
+        statusElement.classList.remove('loading'); // 스피너 숨김
         if (response.success) {
             await chrome.storage.local.set({ geminiApiKey: apiKey });
             statusElement.textContent = 'API 키가 유효하며 저장되었습니다!';
-            statusElement.style.color = 'var(--impu-success-color)';
+            statusElement.style.color = 'var(--success-color)';
             apiKeyInput.classList.add('impu-success-input');
         } else {
             statusElement.textContent = `API 키 유효성 검사 실패: ${response.error}`;
-            statusElement.style.color = 'var(--impu-error-color)';
+            statusElement.style.color = 'var(--error-color)';
             apiKeyInput.classList.add('impu-error-input');
         }
     } catch (error) {
+        statusElement.classList.remove('loading'); // 스피너 숨김
         statusElement.textContent = `오류 발생: ${error.message}`;
-        statusElement.style.color = 'var(--impu-error-color)';
+        statusElement.style.color = 'var(--error-color)';
         apiKeyInput.classList.add('impu-error-input');
     }
     setTimeout(() => { statusElement.textContent = ''; apiKeyInput.classList.remove('impu-error-input', 'impu-success-input'); }, 3000);
@@ -119,6 +140,9 @@ function saveOtherSettings() {
     const extractionMethod = document.querySelector('input[name="extractionMethod"]:checked')?.value || 'both';
     const customPositivePrompt = document.getElementById('impu-customPositivePrompt').value;
     const customNegativePrompt = document.getElementById('impu-customNegativePrompt').value;
+    const geminiPositiveTemplate = document.getElementById('impu-geminiPositiveTemplate').value;
+    const geminiNegativeTemplate = document.getElementById('impu-geminiNegativeTemplate').value;
+
 
     chrome.storage.local.set({
         resultWindowPosition: selectedPosition,
@@ -126,11 +150,13 @@ function saveOtherSettings() {
         promptLength: promptLength,
         extractionMethod: extractionMethod,
         customPositivePrompt: customPositivePrompt,
-        customNegativePrompt: customNegativePrompt
+        customNegativePrompt: customNegativePrompt,
+        geminiPositiveTemplate: geminiPositiveTemplate,
+        geminiNegativeTemplate: geminiNegativeTemplate
     }, () => {
         const statusElement = document.getElementById('impu-otherSettingsStatus');
         statusElement.textContent = '설정이 저장되었습니다.';
-        statusElement.style.color = 'var(--impu-accent-color)';
+        statusElement.style.color = 'var(--accent-color)';
         setTimeout(() => {
             statusElement.textContent = '';
         }, 1500);
@@ -141,7 +167,7 @@ function saveOtherSettings() {
                 chrome.tabs.sendMessage(tabs[0].id, {
                     action: "updateUI",
                     resultWindowPosition: selectedPosition,
-                    extractionMethod: extractionMethod
+                    extractionMethod: extractionMethod // 현재는 content.js에서 직접 사용하지 않으나, 통일성을 위해 전송
                 });
             }
         });
@@ -160,6 +186,8 @@ function restoreOptions() {
         'extractionMethod',
         'customPositivePrompt',
         'customNegativePrompt',
+        'geminiPositiveTemplate', // 새로 추가된 템플릿
+        'geminiNegativeTemplate', // 새로 추가된 템플릿
         'promptHistory'
     ], (data) => {
         document.getElementById('impu-geminiApiKey').value = data.geminiApiKey || '';
@@ -190,6 +218,10 @@ function restoreOptions() {
 
         document.getElementById('impu-customPositivePrompt').value = data.customPositivePrompt || ''; // ID에 impu- 접두사 추가
         document.getElementById('impu-customNegativePrompt').value = data.customNegativePrompt || ''; // ID에 impu- 접두사 추가
+        document.getElementById('impu-geminiPositiveTemplate').value = data.geminiPositiveTemplate ||
+        `이 이미지에 대한 NovelAI와 Stable Diffusion 프롬프트를 JSON 형식으로 생성해 주세요. {promptLengthInstruction} {detailInstruction}`; // 기본 템플릿
+        document.getElementById('impu-geminiNegativeTemplate').value = data.geminiNegativeTemplate ||
+        `**부정적인 프롬프트**: 절대 적지 마세요. (예: bad hand, bad eyes).`; // 기본 템플릿
 
         // 초기 탭 활성화 (이미지 변환 탭)
         document.querySelectorAll('.impu-tab-content').forEach(content => content.classList.remove('active'));
@@ -208,11 +240,8 @@ function restoreOptions() {
         document.querySelectorAll('.impu-collapsible-section').forEach(section => { // 클래스에 impu- 접두사 추가
             const header = section.querySelector('.impu-collapsible-header'); // 클래스에 impu- 접두사 추가
             const icon = header.querySelector('.impu-collapse-icon'); // 클래스에 impu- 접두사 추가
-            if (section.classList.contains('active')) {
-                icon.textContent = '▼';
-            } else {
-                icon.textContent = '▶';
-            }
+            // 섹션이 'active' 클래스를 가지고 있으면 ▼, 아니면 ▶
+            icon.textContent = section.classList.contains('active') ? '▼' : '▶';
         });
     });
 
@@ -232,7 +261,7 @@ async function uploadImageAndProcess() {
 
     if (files.length === 0) {
         statusElement.textContent = '업로드할 이미지를 선택해주세요.';
-        statusElement.style.color = 'var(--impu-error-color)';
+        statusElement.style.color = 'var(--error-color)';
         setTimeout(() => { statusElement.textContent = ''; }, 3000);
         return;
     }
@@ -240,7 +269,7 @@ async function uploadImageAndProcess() {
     const file = files[0];
     if (!file.type.startsWith('image/')) {
         statusElement.textContent = '이미지 파일만 업로드할 수 있습니다.';
-        statusElement.style.color = 'var(--impu-error-color)';
+        statusElement.style.color = 'var(--error-color)';
         setTimeout(() => { statusElement.textContent = ''; }, 3000);
         return;
     }
@@ -250,8 +279,7 @@ async function uploadImageAndProcess() {
         existingResults.remove();
     }
 
-    chrome.runtime.sendMessage({ action: "updatePopupStatus", message: '이미지 업로드 및 처리 중...', type: 'loading' });
-
+    updateSpecificProcessStatus(statusElement, true, '이미지 로드 및 처리 중...'); // 팝업 내 진행 상태 표시
 
     try {
         const reader = new FileReader();
@@ -265,8 +293,20 @@ async function uploadImageAndProcess() {
                 imageType: file.type
             });
 
+            updateSpecificProcessStatus(statusElement, false); // 처리 완료 후 진행 상태 숨김
+
             if (response.error) {
-                // 오류 메시지는 background.js에서 updatePopupStatus를 통해 전송되므로 별도 처리 불필요
+                showToast(`오류: ${response.error}`, 'error'); // 오류 토스트 표시
+                // 오류가 발생해도 결과창을 표시하여 오류 메시지를 볼 수 있도록 함
+                displayPromptResultsInPopup(
+                    response.novelai || "N/A", // 에러 발생 시 N/A
+                    response.stable_diffusion || "N/A", // 에러 발생 시 N/A
+                    response.detectedNovelaiPrompt,
+                    response.detectedStableDiffusionPrompt,
+                    response.detectedExifComment,
+                    response.usedExtractionMethod,
+                    response.error // 오류 메시지 전달
+                );
             } else {
                 displayPromptResultsInPopup(
                     response.novelai,
@@ -279,11 +319,13 @@ async function uploadImageAndProcess() {
             }
         };
         reader.onerror = (error) => {
-            chrome.runtime.sendMessage({ action: "updatePopupStatus", message: `파일 읽기 오류: ${error.message}`, type: 'error' });
+            updateSpecificProcessStatus(statusElement, false);
+            showToast(`파일 읽기 오류: ${error.message}`, 'error');
         };
 
     } catch (error) {
-        chrome.runtime.sendMessage({ action: "updatePopupStatus", message: `이미지 처리 오류: ${error.message}`, type: 'error' });
+        updateSpecificProcessStatus(statusElement, false);
+        showToast(`이미지 처리 오류: ${error.message}`, 'error');
     }
 }
 
@@ -292,13 +334,13 @@ async function uploadImageAndProcess() {
  */
 async function processClipboardImage() {
     const statusElement = document.getElementById('impu-clipboardImageStatus'); // ID에 impu- 접두사 추가
-    statusElement.textContent = '클립보드에서 이미지 로드 중...';
-    statusElement.style.color = 'var(--impu-text-color-light)';
-
+    
     const existingResults = document.getElementById('impu-popup-prompt-results'); // ID에 impu- 접두사 추가
     if (existingResults) {
         existingResults.remove();
     }
+    
+    updateSpecificProcessStatus(statusElement, true, '클립보드에서 이미지 로드 중...'); // 팝업 내 진행 상태 표시
 
     try {
         const clipboardItems = await navigator.clipboard.read();
@@ -315,9 +357,10 @@ async function processClipboardImage() {
         }
 
         if (!imageBlob) {
+            updateSpecificProcessStatus(statusElement, false); // 진행 상태 숨김
             statusElement.textContent = '클립보드에 이미지 데이터가 없습니다.';
-            statusElement.style.color = 'var(--impu-error-color)';
-            chrome.runtime.sendMessage({ action: "showToast", message: '클립보드에 이미지 데이터가 없습니다.', type: 'error', duration: 3000 });
+            statusElement.style.color = 'var(--error-color)';
+            showToast('클립보드에 이미지 데이터가 없습니다.', 'error', 3000);
             setTimeout(() => { statusElement.textContent = ''; }, 3000);
             return;
         }
@@ -327,7 +370,7 @@ async function processClipboardImage() {
         reader.onloadend = async () => {
             const imageDataUrl = reader.result;
 
-            chrome.runtime.sendMessage({ action: "updatePopupStatus", message: '클립보드 이미지 처리 중...', type: 'loading' });
+            updateSpecificProcessStatus(statusElement, true, '클립보드 이미지 처리 중...'); // 메시지 업데이트
 
             const response = await chrome.runtime.sendMessage({
                 action: "processImageWithGeminiFromPopup",
@@ -335,8 +378,19 @@ async function processClipboardImage() {
                 imageType: imageBlob.type
             });
 
+            updateSpecificProcessStatus(statusElement, false); // 처리 완료 후 진행 상태 숨김
+
             if (response.error) {
-                // 오류 메시지는 background.js에서 updatePopupStatus를 통해 전송됨
+                showToast(`오류: ${response.error}`, 'error'); // 오류 토스트 표시
+                displayPromptResultsInPopup(
+                    response.novelai || "N/A",
+                    response.stable_diffusion || "N/A",
+                    response.detectedNovelaiPrompt,
+                    response.detectedStableDiffusionPrompt,
+                    response.detectedExifComment,
+                    response.usedExtractionMethod,
+                    response.error
+                );
             } else {
                 displayPromptResultsInPopup(
                     response.novelai,
@@ -347,22 +401,23 @@ async function processClipboardImage() {
                     response.usedExtractionMethod
                 );
             }
-            setTimeout(() => { statusElement.textContent = ''; }, 1500); // 클립보드 상태 메시지 초기화
         };
         reader.onerror = (error) => {
-            chrome.runtime.sendMessage({ action: "updatePopupStatus", message: `클립보드 이미지 읽기 오류: ${error.message}`, type: 'error' });
+            updateSpecificProcessStatus(statusElement, false);
+            showToast(`클립보드 이미지 읽기 오류: ${error.message}`, 'error');
             setTimeout(() => { statusElement.textContent = ''; }, 3000);
         };
 
     } catch (error) {
+        updateSpecificProcessStatus(statusElement, false);
         if (error.name === 'NotAllowedError') {
             statusElement.textContent = '클립보드 접근 권한이 거부되었습니다. 권한을 허용해주세요.';
-            statusElement.style.color = 'var(--impu-error-color)';
-            chrome.runtime.sendMessage({ action: "showToast", message: '클립보드 접근 권한이 필요합니다.', type: 'error', duration: 5000 });
+            statusElement.style.color = 'var(--error-color)';
+            showToast('클립보드 접근 권한이 필요합니다.', 'error', 5000);
         } else {
             statusElement.textContent = `클립보드 이미지 처리 오류: ${error.message}`;
-            statusElement.style.color = 'var(--impu-error-color)';
-            chrome.runtime.sendMessage({ action: "showToast", message: `클립보드 이미지 처리 오류: ${error.message}`, type: 'error', duration: 5000 });
+            statusElement.style.color = 'var(--error-color)';
+            showToast(`클립보드 이미지 처리 오류: ${error.message}`, 'error', 5000);
         }
         console.error('Failed to read clipboard contents: ', error);
         setTimeout(() => { statusElement.textContent = ''; }, 3000);
@@ -373,7 +428,7 @@ async function processClipboardImage() {
 /**
  * 팝업 내에서 프롬프트 결과를 표시하는 함수
  */
-function displayPromptResultsInPopup(geminiNovelai, geminiStableDiffusion, detectedNovelai, detectedStableDiffusion, detectedExifComment, usedExtractionMethod) {
+function displayPromptResultsInPopup(geminiNovelai, geminiStableDiffusion, detectedNovelai, detectedStableDiffusion, detectedExifComment, usedExtractionMethod, errorMessage = null) {
     const resultsContainer = document.getElementById('impu-popup-prompt-results') || document.createElement('div'); // ID에 impu- 접두사 추가
     if (!resultsContainer.id) { // 새로 생성된 경우
         resultsContainer.id = 'impu-popup-prompt-results'; // ID에 impu- 접두사 추가
@@ -433,27 +488,38 @@ function displayPromptResultsInPopup(geminiNovelai, geminiStableDiffusion, detec
     ` : '';
 
 
+    let errorHtml = '';
+    if (errorMessage) {
+        errorHtml = `
+            <div style="color: var(--error-color); text-align: center; margin-bottom: 15px;">
+                ${errorMessage}
+            </div>
+        `;
+    }
+
     resultsContainer.innerHTML = `
         <div class="impu-prompt-header" style="border-bottom: 1px solid rgba(var(--text-color-light), 0.3); padding-bottom: 10px; margin-bottom: 15px;">
             <strong style="font-size: 18px; color: var(--text-color);">생성된 프롬프트</strong>
             <button class="impu-close-button" id="impu-closePopupResults" style="position: absolute; right: 5px; top: 5px;">X</button>
         </div>
+        ${errorHtml}
         ${detectedPromptHtml}
         ${geminiGeneratedHtml}
     `;
     
     // 새로 추가된 접기/펴기 섹션에 대한 이벤트 리스너 다시 바인딩
-    resultsContainer.querySelectorAll('.impu-collapsible-header').forEach(header => { // 클래스에 impu- 접두사 추가
-        header.addEventListener('click', () => {
-            const section = header.closest('.impu-collapsible-section'); // 클래스에 impu- 접두사 추가
-            section.classList.toggle('active');
-            const icon = header.querySelector('.impu-collapse-icon'); // 클래스에 impu- 접두사 추가
-            if (section.classList.contains('active')) {
-                icon.textContent = '▼';
-            } else {
-                icon.textContent = '▶';
-            }
-        });
+    resultsContainer.querySelectorAll('.impu-collapsible-section').forEach(section => {
+        const header = section.querySelector('.impu-collapsible-header');
+        if (header) {
+            header.addEventListener('click', () => {
+                section.classList.toggle('active');
+                const icon = header.querySelector('.impu-collapse-icon');
+                icon.textContent = section.classList.contains('active') ? '▼' : '▶';
+            });
+            // 초기 상태에 따라 아이콘 설정 (기본은 active)
+            const icon = header.querySelector('.impu-collapse-icon');
+            if (icon) icon.textContent = section.classList.contains('active') ? '▼' : '▶';
+        }
     });
 
     resultsContainer.style.display = 'block';
@@ -482,11 +548,13 @@ function displayPromptResultsInPopup(geminiNovelai, geminiStableDiffusion, detec
 
 /**
  * 팝업에서 background.js로부터 진행 상황 메시지를 받을 때 호출됩니다.
+ * 이 함수는 이제 팝업 내 상태 메시지 영역에 직접 로딩 스피너를 포함하여 표시합니다.
  */
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "updatePopupStatus") {
         const imageUploadStatusElement = document.getElementById('impu-imageUploadStatus'); // ID에 impu- 접두사 추가
         const clipboardImageStatusElement = document.getElementById('impu-clipboardImageStatus'); // ID에 impu- 접두사 추가
+        const apiKeyStatusElement = document.getElementById('impu-apiKeyStatus'); // ID에 impu- 접두사 추가
         const otherSettingsStatusElement = document.getElementById('impu-otherSettingsStatus'); // ID에 impu- 접두사 추가
         
         let statusElementToUse = null;
@@ -494,29 +562,37 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const currentActiveTabId = document.querySelector('.impu-tab-content.active')?.id; // 클래스에 impu- 접두사 추가
 
         if (currentActiveTabId === 'impu-image-conversion-tab') { // ID에 impu- 접두사 추가
-            if (request.message.includes('업로드')) {
-                statusElementToUse = imageUploadStatusElement;
-            } else if (request.message.includes('클립보드')) {
-                statusElementToUse = clipboardImageStatusElement;
+            // 이미지 업로드 또는 클립보드 이미지 처리 시
+            // 이 요청은 background에서 updatePopupStatus를 직접 호출할 때만 발생
+            // 이제 로딩 상태는 updateSpecificProcessStatus를 통해 제어되므로, 여기서는 메시지를 클리어하는 용도로만 사용
+            if (request.type === 'loading') {
+                // do nothing, status is handled by updateSpecificProcessStatus
             } else {
-                statusElementToUse = imageUploadStatusElement || clipboardImageStatusElement;
+                // Clear any lingering loading message in either upload or clipboard status
+                if (imageUploadStatusElement.classList.contains('loading')) {
+                    updateSpecificProcessStatus(imageUploadStatusElement, false);
+                }
+                if (clipboardImageStatusElement.classList.contains('loading')) {
+                    updateSpecificProcessStatus(clipboardImageStatusElement, false);
+                }
+                // then display toast if it's not a loading message
+                if (request.message) {
+                    showToast(request.message, request.type, request.duration);
+                }
             }
         } else if (currentActiveTabId === 'impu-settings-info-tab') { // ID에 impu- 접두사 추가
-            statusElementToUse = otherSettingsStatusElement;
-        }
-
-        if (statusElementToUse) {
-            statusElementToUse.textContent = request.message;
-            if (request.type === 'error') {
-                statusElementToUse.style.color = 'var(--impu-error-color)';
-            } else if (request.type === 'success') {
-                statusElementToUse.style.color = 'var(--impu-success-color)';
-                setTimeout(() => { statusElementToUse.textContent = ''; }, 1500);
-            } else if (request.type === 'warning') {
-                statusElementToUse.style.color = 'var(--impu-status-warning-bg)';
-                setTimeout(() => { statusElementToUse.textContent = ''; }, 3000);
+            // API 키 저장 또는 기타 설정 저장 시
+            // updatePopupStatus는 background에서 직접 API 키 저장 로직의 응답을 받을 때 사용됨
+            // 이 부분은 API 키 유효성 검사 로직이 이미 statusElement를 직접 업데이트하므로,
+            // 여기서는 다른 설정을 저장할 때의 상태 메시지 (otherSettingsStatusElement)에만 초점을 맞춤
+            if (request.type === 'loading') {
+                // API 키 유효성 검사는 이미 직접 statusElement를 업데이트하므로 여기서는 처리하지 않음
             } else {
-                statusElementToUse.style.color = 'var(--impu-text-color-light)';
+                if (request.message) {
+                    otherSettingsStatusElement.textContent = request.message;
+                    otherSettingsStatusElement.style.color = request.type === 'success' ? 'var(--success-color)' : 'var(--error-color)';
+                    setTimeout(() => { otherSettingsStatusElement.textContent = ''; }, 1500);
+                }
             }
         }
     }
