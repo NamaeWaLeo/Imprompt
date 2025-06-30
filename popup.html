@@ -39,50 +39,27 @@
                 </div>
                 <div class="impu-collapsible-content">
                     <div class="impu-setting-section">
-                        <label for="impu-geminiApiKey" class="impu-setting-label">Gemini API Key:
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    Gemini API를 사용하기 위한 고유 키입니다. <br>
-                                    Google AI Studio에서 발급받을 수 있습니다. <br>
-                                    (예: `AIzaSy...`)
-                                </span>
-                            </span>
-                        </label>
-                        <div class="impu-api-key-input-group">
-                            <input type="password" id="impu-geminiApiKey" placeholder="여기에 Gemini API 키를 입력하세요." class="impu-neumorphic-input">
+                        <label for="impu-geminiApiKey" class="impu-setting-label">Gemini API Key:</label>
+                        <div style="position: relative; width: 100%; display: flex; align-items: center; gap: 8px;">
+                            <input type="password" id="impu-geminiApiKey" placeholder="여기에 Gemini API 키를 입력하세요." class="impu-neumorphic-input" style="flex-grow: 1;">
                             <button id="impu-toggleApiKeyVisibility" class="impu-neumorphic-button" style="width: 38px; height: 38px; padding: 0; display: flex; justify-content: center; align-items: center; font-size: 14px;">👁️</button>
                         </div>
                         <button id="impu-saveApiKeyButton" class="impu-neumorphic-button" style="width: 100%; margin-top: 8px;">API 키 저장 및 확인</button>
                         <div id="impu-apiKeyStatus" class="impu-status-message"></div>
                     </div>
                     <div class="impu-setting-section">
-                        <label for="impu-geminiModel" class="impu-setting-label">Gemini 모델 선택:
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    프롬프트 생성에 사용할 Gemini 모델을 선택합니다.<br>
-                                    'flash' 모델이 'pro' 모델보다 빠르고 저렴하지만, 'pro'는 더 복잡한 추론에 강합니다.
-                                </span>
-                            </span>
-                        </label>
+                        <label for="impu-geminiModel" class="impu-setting-label">Gemini 모델 선택:</label>
                         <div class="impu-select-wrapper impu-neumorphic-input">
                             <select id="impu-geminiModel">
                                 <option value="gemini-1.5-pro">gemini-1.5-pro</option>
                                 <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-                                </select>
+                                <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                            </select>
                         </div>
                     </div>
                     <div class="impu-setting-section">
-                        <label for="impu-promptLength" class="impu-setting-label">프롬프트 길이:
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    Gemini가 생성할 프롬프트의 길이를 조절합니다.<br>
-                                    '짧게'는 핵심만, '매우 길게'는 상세한 설명을 포함합니다.
-                                </span>
-                            </span>
-                        </label>
+                        <label for="impu-promptLength" class="impu-setting-label">프롬프트 길이:</label>
                         <div class="impu-select-wrapper impu-neumorphic-input">
                             <select id="impu-promptLength">
                                 <option value="short">짧게 (Short)</option>
@@ -93,17 +70,7 @@
                         </div>
                     </div>
                     <div class="impu-setting-section">
-                        <label class="impu-setting-label">프롬프트 추출 방식:
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    이미지에서 프롬프트를 추출하는 방식을 선택합니다.<br>
-                                    '메타데이터만': 이미지 내 저장된 정보를 읽습니다.<br>
-                                    'Gemini API로 생성': AI가 이미지를 분석하여 생성합니다.<br>
-                                    '둘 다': 메타데이터를 우선 추출하고, 없으면 AI를 사용합니다.
-                                </span>
-                            </span>
-                        </label>
+                        <label class="impu-setting-label">프롬프트 추출 방식:</label>
                         <div class="impu-position-grid-popup">
                             <label class="impu-neumorphic-radio-label">
                                 <input type="radio" name="extractionMethod" value="metadata" id="impu-extMetadata">
@@ -122,65 +89,64 @@
                 </div>
             </div>
 
-            <div class="impu-collapsible-section" id="impu-advanced-settings-section">
+            <div class="impu-collapsible-section">
                 <div class="impu-collapsible-header">
-                    <h3 class="impu-section-title">고급 설정 <span class="impu-collapse-icon">▶</span></h3>
+                    <h3 class="impu-section-title">UI 및 기타 설정 <span class="impu-collapse-icon">▶</span></h3>
                 </div>
                 <div class="impu-collapsible-content">
+                    <div class="impu-setting-section">
+                        <label class="impu-setting-label">결과창 위치:</label>
+                        <div class="impu-position-grid-popup">
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="top-left" id="impu-posTopLeft">
+                                <span class="impu-custom-radio"></span> 좌측 상단
+                            </label>
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="top-center" id="impu-posTopCenter">
+                                <span class="impu-custom-radio"></span> 상단 중앙
+                            </label>
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="top-right" id="impu-posTopRight">
+                                <span class="impu-custom-radio"></span> 우측 상단
+                            </label>
+
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="middle-left" id="impu-posMiddleLeft">
+                                <span class="impu-custom-radio"></span> 좌측 중단
+                            </label>
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="middle-center" id="impu-posMiddleCenter">
+                                <span class="impu-custom-radio"></span> 중앙
+                            </label>
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="middle-right" id="impu-posMiddleRight">
+                                <span class="impu-custom-radio"></span> 우측 중단
+                            </label>
+
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="bottom-left" id="impu-posBottomLeft">
+                                <span class="impu-custom-radio"></span> 좌측 하단
+                            </label>
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="bottom-center" id="impu-posBottomCenter">
+                                <span class="impu-custom-radio"></span> 하단 중앙
+                            </label>
+                            <label class="impu-neumorphic-radio-label">
+                                <input type="radio" name="resultWindowPosition" value="bottom-right" id="impu-posBottomRight" checked>
+                                <span class="impu-custom-radio"></span> 우측 하단
+                            </label>
+                        </div>
+                    </div>
+
                     <div class="impu-setting-section impu-custom-prompt-input-group">
-                        <label for="impu-customPositivePrompt" class="impu-setting-label">사용자 정의 긍정 프롬프트 (Gemini 결과에 추가):
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    Gemini가 생성하는 긍정 프롬프트에 항상 추가하고 싶은 내용을 입력합니다.<br>
-                                    (예: masterpiece, best quality, ultra detailed)
-                                </span>
-                            </span>
-                        </label>
+                        <label for="impu-customPositivePrompt" class="impu-setting-label">사용자 정의 긍정 프롬프트 (추가):</label>
                         <textarea id="impu-customPositivePrompt" class="impu-custom-prompt-textarea" placeholder="masterpiece, best quality, ultra detailed, ... 등"></textarea>
                     </div>
 
                     <div class="impu-setting-section impu-custom-prompt-input-group">
-                        <label for="impu-customNegativePrompt" class="impu-setting-label">사용자 정의 부정 프롬프트 (Gemini 결과에 추가):
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    Gemini가 생성하는 Stable Diffusion 부정 프롬프트에 항상 추가하고 싶은 내용을 입력합니다.<br>
-                                    (예: low quality, bad anatomy, blurry)
-                                </span>
-                            </span>
-                        </label>
+                        <label for="impu-customNegativePrompt" class="impu-setting-label">사용자 정의 부정 프롬프트 (제외):</label>
                         <textarea id="impu-customNegativePrompt" class="impu-custom-prompt-textarea" placeholder="low quality, bad anatomy, blurry, ... 등"></textarea>
                     </div>
-
-                    <div class="impu-setting-section impu-custom-prompt-input-group">
-                        <label for="impu-geminiPositiveTemplate" class="impu-setting-label">Gemini 긍정 프롬프트 템플릿:
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    Gemini 모델에게 이미지를 설명하고 긍정 프롬프트를 생성하도록 지시하는 기본 템플릿입니다. 이 템플릿을 수정하여 Gemini의 응답 스타일을 조절할 수 있습니다.<br>
-                                    **사용 가능한 변수:**<br>
-                                    `{promptLengthInstruction}`: 선택된 프롬프트 길이에 따른 지시사항<br>
-                                    `{detailInstruction}`: 상세 설명 지시사항
-                                </span>
-                            </span>
-                        </label>
-                        <textarea id="impu-geminiPositiveTemplate" class="impu-custom-prompt-textarea" placeholder="이 이미지에 대한 NovelAI와 Stable Diffusion 프롬프트를 JSON 형식으로 생성해 주세요. {promptLengthInstruction} {detailInstruction}"></textarea>
-                    </div>
-
-                    <div class="impu-setting-section impu-custom-prompt-input-group">
-                        <label for="impu-geminiNegativeTemplate" class="impu-setting-label">Gemini 부정 프롬프트 템플릿:
-                            <span class="impu-help-tooltip-wrapper">
-                                <span class="impu-help-tooltip-icon">?</span>
-                                <span class="impu-help-tooltip-text">
-                                    Gemini 모델에게 부정 프롬프트에 대해 지시하는 템플릿입니다. 수정하여 특정 부정 프롬프트를 제외하도록 강조할 수 있습니다.<br>
-                                    이 템플릿은 Stable Diffusion 프롬프트 생성 시 사용됩니다.
-                                </span>
-                            </span>
-                        </label>
-                        <textarea id="impu-geminiNegativeTemplate" class="impu-custom-prompt-textarea" placeholder="**부정적인 프롬프트**: 절대 적지 마세요. (예: bad hand, bad eyes)."></textarea>
-                    </div>
-
                 </div>
             </div>
             

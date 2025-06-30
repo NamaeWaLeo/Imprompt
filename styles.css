@@ -486,27 +486,9 @@ body {
     flex-basis: 100%;
     font-size: 14px;
     color: var(--text-color);
-
-    display: flex; /* 스피너와 메시지를 함께 정렬 */
-    justify-content: center;
-    align-items: center;
-    gap: 8px; /* 스피너와 메시지 사이 간격 */
-    min-height: 20px; /* 메시지가 없을 때도 레이아웃 유지 */
 }
 .impu-status-message:not(:empty) {
     opacity: 1;
-}
-.impu-status-message.loading {
-    opacity: 1; /* 로딩 상태일 때 항상 보임 */
-}
-.impu-status-message .impu-spinner {
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid var(--accent-color);
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-    animation: impu-spin 1s linear infinite;
-    flex-shrink: 0;
 }
 
 .impu-version-info {
@@ -780,55 +762,42 @@ body {
 }
 
 
-/* 진행 창 (Process Status Container - 웹페이지에만 사용) */
-#impu-progress-status-container {
+/* 진행 창 (Progress Window) */
+/* ID 선택자 앞에도 impu- 붙임 */
+#impu-progress-window-container {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background-color: rgba(var(--surface-color-rgb-base), 0.9);
+    top: 25px; /* 위치 조정 */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(var(--surface-color-rgb-base), 0.9); /* 투명도 0.9 */
     color: var(--text-color);
-    padding: 12px 18px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    padding: 16px 22px; /* 패딩 증가 */
+    border-radius: 16px; /* 라운드 증가 */
+    box-shadow: var(--glass-shadow);
     border: var(--glass-border);
     z-index: 9998;
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: none;
+    min-width: 280px; /* 최소 너비 증가 */
+    max-width: 400px; /* 최대 너비 증가 */
+    pointer-events: none;
+    font-size: 16px; /* 폰트 크기 증가 */
     opacity: 0;
-    visibility: hidden;
-    transform: translateY(20px);
-    transition: opacity 0.3s ease-out, transform 0.3s ease-out, visibility 0.3s;
+    transform: translateX(-50%) translateY(-60px); /* 시작 위치 조정 */
+    /* 진행 창 등장/사라짐 애니메이션 (Mac OS 알림 스타일) */
+    transition: opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
 }
 
-#impu-progress-status-container.show {
+#impu-progress-window-container.show {
     opacity: 1;
-    visibility: visible;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
 }
-
-#impu-progress-status-container .impu-spinner {
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top: 3px solid var(--accent-color);
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: impu-spin 1s linear infinite;
-    flex-shrink: 0;
+/* hide 클래스를 추가하여 사라질 때 애니메이션 적용 */
+#impu-progress-window-container.hide {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-60px);
 }
-
-#impu-progress-status-container .impu-message {
-    font-size: 15px;
-    font-weight: 500;
-}
-
-@keyframes impu-spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
 
 /* 프롬프트 결과 창 (Prompt Container) */
 /* ID 선택자 앞에도 impu- 붙임 */
@@ -1112,54 +1081,51 @@ body {
 }
 
 
-/* "다른 곳을 클릭하지 마세요" 텍스트 스타일 조정 (이제 사용되지 않음) */
-/*
+/* "다른 곳을 클릭하지 마세요" 텍스트 스타일 조정 */
 .impu-no-click-message {
-    font-size: 11px;
-    color: var(--text-color-light);
+    font-size: 11px; /* 조금 작게 */
+    color: var(--text-color-light); /* 조금 어둡게 (기존에도 있었지만 명시적으로 다시 적용) */
     text-align: center;
-    width: 100%;
-    opacity: 0.8;
-    margin-top: 5px;
-    display: block;
+    width: 100%; /* 너비는 그대로 유지 */
+    opacity: 0.8; /* 약간의 투명도 */
+    margin-top: 5px; /* 메시지 아래로 약간 간격 */
+    display: block; /* 줄바꿈을 위해 블록 요소로 */
 }
-*/
 
-/* 스피너 대신 토스트 전체를 가로로 채우는 프로그레스 바 (이제 사용되지 않음) */
-/*
+/* 스피너 대신 토스트 전체를 가로로 채우는 프로그레스 바 */
 .impu-toast-progress-bar {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 4px;
-    background-color: rgba(var(--image-color-light), 0.2);
-    overflow: hidden;
+    height: 4px; /* 프로그레스 바의 높이 */
+    background-color: rgba(var(--image-color-light), 0.2); /* 배경색 (은은하게) */
+    overflow: hidden; /* 채워지는 부분 넘치지 않도록 */
 }
 
 .impu-toast-progress-fill {
     height: 100%;
-    width: 0;
-    background: linear-gradient(90deg, var(--image-color-medium), var(--image-color-light));
-    animation: impu-toast-fill-animation 3s linear infinite;
-    transform-origin: left;
+    width: 0; /* 초기 너비 0 */
+    background: linear-gradient(90deg, var(--image-color-medium), var(--image-color-light)); /* 그라데이션 채움 */
+    animation: impu-toast-fill-animation 3s linear infinite; /* 애니메이션 적용 */
+    transform-origin: left; /* 왼쪽에서 시작 */
 }
 
 @keyframes impu-toast-fill-animation {
     0% { width: 0%; }
     100% { width: 100%; }
 }
-*/
 
-/* @keyframes impu-spin 은 위에서 impu-progress-status-container에 재정의 */
+@keyframes impu-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-/*
 @keyframes impu-indeterminate-progress {
     0% { transform: translateX(-100%); }
     50% { transform: translateX(0%); }
     100% { transform: translateX(100%); }
 }
-*/
 
 /* 캡처 오버레이 및 선택 박스 스타일 */
 /* ID 선택자 앞에도 impu- 붙임 */
@@ -1209,6 +1175,73 @@ body {
     /* 가이드 텍스트 등장/사라짐 애니메이션 */
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* 캡처 버튼 컨테이너 (선택 박스 위) */
+/* 이 부분은 제거될 것이므로 변경하지 않음 */
+/*
+#impu-capture-buttons-container {
+    position: absolute;
+    display: flex;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(var(--surface-color-rgb-base), 0.85);
+    border-radius: 14px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+    border: var(--glass-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: auto;
+}
+
+#impu-capture-buttons-container.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.impu-capture-action-button {
+    background: var(--gradient-accent);
+    color: var(--text-color);
+    padding: 10px 18px;
+    border: 1px solid transparent;
+    border-image: linear-gradient(135deg, rgba(255,255,255,0.3), rgba(255,255,255,0.1)) 1;
+    border-image-slice: 1;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+    transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1), background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.impu-capture-action-button:hover {
+    background: var(--gradient-hover);
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.4);
+}
+
+.impu-capture-action-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -120%;
+    width: 60%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: skewX(-25deg);
+    z-index: -1;
+}
+
+.impu-capture-action-button:hover::before {
+    left: 120%;
+}
+*/
 
 /* 캡처 이미지 확인 모달 스타일 */
 #impu-capture-modal-overlay {
@@ -1272,84 +1305,4 @@ body {
 #impu-modal-action-buttons .impu-neumorphic-button {
     padding: 12px 25px; /* 버튼 패딩 증가 */
     font-size: 16px; /* 버튼 폰트 크기 증가 */
-}
-
-/* 도움말 툴팁 */
-.impu-help-tooltip-wrapper {
-    position: relative;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 5px;
-    cursor: help;
-}
-
-.impu-help-tooltip-icon {
-    font-size: 14px;
-    color: var(--text-color-light);
-    background: rgba(var(--surface-color-rgb-base), 0.5);
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    cursor: help;
-    transition: color 0.2s ease-in-out, background 0.2s ease-in-out;
-}
-
-.impu-help-tooltip-icon:hover {
-    color: var(--accent-color);
-    background: rgba(var(--surface-color-rgb-base), 0.7);
-}
-
-.impu-help-tooltip-text {
-    visibility: hidden;
-    width: 280px; /* 툴팁 너비 */
-    background-color: rgba(var(--surface-color-rgb-base), 0.95);
-    color: var(--text-color);
-    text-align: center;
-    border-radius: 8px;
-    padding: 10px 15px;
-    position: absolute;
-    z-index: 10;
-    bottom: 125%; /* 아이콘 위로 표시 */
-    left: 50%;
-    transform: translateX(-50%);
-    opacity: 0;
-    transition: opacity 0.3s, visibility 0.3s;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.1);
-    font-size: 13px;
-    line-height: 1.4;
-    white-space: normal; /* 텍스트 줄바꿈 허용 */
-}
-
-.impu-help-tooltip-text::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -5px;
-    border-width: 5px;
-    border-style: solid;
-    border-color: rgba(var(--surface-color-rgb-base), 0.95) transparent transparent transparent;
-}
-
-.impu-help-tooltip-wrapper:hover .impu-help-tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* 팝업 내 API 키 텍스트 박스 옆 버튼 정렬 */
-.impu-api-key-input-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.impu-api-key-input-group .impu-neumorphic-input {
-    flex-grow: 1;
-}
-.impu-api-key-input-group .impu-neumorphic-button {
-    flex-shrink: 0;
 }

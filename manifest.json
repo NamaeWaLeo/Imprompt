@@ -9,8 +9,7 @@
     "clipboardRead",
     "clipboardWrite",
     "storage",
-    "contextMenus",
-    "offscreen"
+    "contextMenus"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
